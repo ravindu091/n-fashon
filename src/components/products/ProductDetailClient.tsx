@@ -16,9 +16,10 @@ import { formatDate } from '@/utils/date'
 interface ProductDetailClientProps {
   product: any
   variants: any[]
+  categories?: string[]
 }
 
-export function ProductDetailClient({ product, variants }: ProductDetailClientProps) {
+export function ProductDetailClient({ product, variants, categories = [] }: ProductDetailClientProps) {
   const [isVariantModalOpen, setIsVariantModalOpen] = useState(false)
   const [editingVariant, setEditingVariant] = useState<any | null>(null)
   const [isEditProductOpen, setIsEditProductOpen] = useState(false)
@@ -214,6 +215,7 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
         isOpen={isEditProductOpen}
         onClose={() => setIsEditProductOpen(false)}
         initialData={product}
+        categories={categories}
       />
 
       {/* Archive Confirm Dialog */}

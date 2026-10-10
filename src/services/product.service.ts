@@ -6,6 +6,8 @@ import { StockBatch } from '@/models/StockBatch'
 import { generateProductCode } from '@/services/codegen.service'
 import type { PaginatedResult } from '@/types'
 
+import { Settings, clearSettingsCache, getSettings } from '@/models/Settings'
+
 export interface ProductFilters {
   search?: string
   category?: string
@@ -27,9 +29,21 @@ export interface ProductData {
 
 export async function createProduct(data: ProductData, userId: string) {
   await connectDB()
-  const code = await generateProductCode(data.category)
+  const trimmedCategory = data.category?.trim() || 'Other'
+
+  // Persist category to store settings if not already present
+  if (trimmedCategory) {
+    const settings = await getSettings()
+    if (!settings.categories.includes(trimmedCategory)) {
+      await Settings.updateOne({}, { $addToSet: { categories: trimmedCategory } })
+      clearSettingsCache()
+    }
+  }
+
+  const code = await generateProductCode(trimmedCategory)
   const product = await Product.create({
     ...data,
+    category: trimmedCategory,
     code,
     colors: data.colors ?? [],
     sizes: data.sizes ?? [],
@@ -44,6 +58,15 @@ export async function updateProduct(id: string, data: Partial<ProductData>) {
   // Prevent code changes — strip it out if accidentally passed
   const { ...safeData } = data as Partial<ProductData> & { code?: string }
   delete safeData.code
+
+  if (safeData.category) {
+    safeData.category = safeData.category.trim()
+    const settings = await getSettings()
+    if (!settings.categories.includes(safeData.category)) {
+      await Settings.updateOne({}, { $addToSet: { categories: safeData.category } })
+      clearSettingsCache()
+    }
+  }
 
   const product = await Product.findByIdAndUpdate(
     id,

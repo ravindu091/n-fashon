@@ -1,6 +1,7 @@
 import React from 'react'
 import { notFound } from 'next/navigation'
 import { getProductWithVariants } from '@/services/product.service'
+import { getSettings } from '@/models/Settings'
 import { ProductDetailClient } from '@/components/products/ProductDetailClient'
 import connectDB from '@/lib/mongodb'
 
@@ -13,7 +14,11 @@ export default async function ProductDetailPage({
   await connectDB()
   const { id } = await params
 
-  const result = await getProductWithVariants(id)
+  const [result, settings] = await Promise.all([
+    getProductWithVariants(id),
+    getSettings(),
+  ])
+
   if (!result) {
     notFound()
   }
@@ -22,6 +27,7 @@ export default async function ProductDetailPage({
     <ProductDetailClient
       product={JSON.parse(JSON.stringify(result.product))}
       variants={JSON.parse(JSON.stringify(result.variants))}
+      categories={settings.categories}
     />
   )
 }

@@ -174,6 +174,7 @@ export function ProductListClient({
           setEditingProduct(null)
         }}
         initialData={editingProduct}
+        categories={categories}
       />
 
       {/* Archive Confirmation Dialog */}
