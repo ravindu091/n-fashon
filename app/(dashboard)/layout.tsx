@@ -12,18 +12,26 @@ export default async function DashboardLayout({ children }: { children: React.Re
   let user = null
 
   if (session?.userId) {
-    try {
-      await connectDB()
-      const userDoc = await User.findById(session.userId).select('name email role').lean()
-      if (userDoc) {
-        user = {
-          name: userDoc.name,
-          email: userDoc.email,
-          role: userDoc.role,
-        }
+    if (session.name) {
+      // Fast path: instant resolution directly from encrypted JWT token (0ms DB latency)
+      user = {
+        name: session.name,
+        role: session.role,
       }
-    } catch {
-      // Fallback gracefully
+    } else {
+      // Fallback for sessions created before name was saved in JWT
+      try {
+        await connectDB()
+        const userDoc = await User.findById(session.userId).select('name role').lean()
+        if (userDoc) {
+          user = {
+            name: userDoc.name,
+            role: userDoc.role,
+          }
+        }
+      } catch {
+        // Fallback gracefully
+      }
     }
   }
 

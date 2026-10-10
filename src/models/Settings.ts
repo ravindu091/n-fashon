@@ -55,9 +55,20 @@ const SettingsSchema = new Schema<ISettings>(
 export const Settings: Model<ISettings> =
   models.Settings ?? model<ISettings>('Settings', SettingsSchema)
 
-/** Get or create the singleton settings document */
+let cachedSettings: { doc: ISettings; expiresAt: number } | null = null
+
+export function clearSettingsCache(): void {
+  cachedSettings = null
+}
+
+/** Get or create the singleton settings document with in-memory caching */
 export async function getSettings(): Promise<ISettings> {
+  const now = Date.now()
+  if (cachedSettings && cachedSettings.expiresAt > now) {
+    return cachedSettings.doc
+  }
   let s = await Settings.findOne()
   if (!s) s = await Settings.create({})
+  cachedSettings = { doc: s, expiresAt: now + 60_000 }
   return s
 }

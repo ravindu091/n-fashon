@@ -32,15 +32,33 @@ const cache: MongooseCache = global.mongooseCache ?? { conn: null, promise: null
 if (!global.mongooseCache) global.mongooseCache = cache
 
 export async function connectDB(): Promise<typeof mongoose> {
-  if (cache.conn) return cache.conn
+  if (cache.conn && mongoose.connection.readyState === 1) {
+    return cache.conn
+  }
 
   if (!cache.promise) {
-    cache.promise = mongoose.connect(MONGODB_URI, {
+    const opts = {
       dbName: process.env.MONGODB_DB ?? 'reselling',
       bufferCommands: false,
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 10000,
-    })
+      minPoolSize: 1,
+      maxIdleTimeMS: 45000,
+      serverSelectionTimeoutMS: 6000,
+      socketTimeoutMS: 20000,
+      connectTimeoutMS: 6000,
+    }
+
+    cache.promise = mongoose
+      .connect(MONGODB_URI, opts)
+      .then((m) => {
+        cache.conn = m
+        return m
+      })
+      .catch((err) => {
+        cache.promise = null
+        cache.conn = null
+        throw err
+      })
   }
 
   cache.conn = await cache.promise

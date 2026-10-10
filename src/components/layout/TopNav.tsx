@@ -8,7 +8,7 @@ export function TopNav({
   user,
 }: {
   onMenuClick: () => void
-  user?: { name: string; email: string; role: string } | null
+  user?: { name: string; email?: string; role: string } | null
 }) {
   const userName = user?.name || 'Admin User'
   const userRole = user?.role || 'admin'

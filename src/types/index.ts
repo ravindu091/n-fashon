@@ -3,6 +3,7 @@
 
 export interface SessionPayload {
   userId: string
+  name?: string
   role: 'admin' | 'inventory_manager' | 'sales_staff'
   expiresAt: string
 }

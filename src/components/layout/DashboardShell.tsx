@@ -9,7 +9,7 @@ export function DashboardShell({
   user,
 }: {
   children: React.ReactNode
-  user?: { name: string; email: string; role: string } | null
+  user?: { name: string; email?: string; role: string } | null
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
 

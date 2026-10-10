@@ -61,7 +61,7 @@ export async function loginAction(
   await user.save()
 
   // Create session
-  await createSession(user._id.toString(), user.role)
+  await createSession(user._id.toString(), user.role, user.name)
 
   redirect('/dashboard')
 }
