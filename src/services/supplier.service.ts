@@ -8,7 +8,7 @@ import type { PaginatedResult } from '@/types'
 export interface SupplierData {
   name: string
   contactPerson?: string
-  phone: string
+  phone?: string
   email?: string
   address?: string
   notes?: string

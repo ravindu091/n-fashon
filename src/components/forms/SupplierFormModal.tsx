@@ -13,7 +13,7 @@ interface SupplierFormModalProps {
     _id: string
     name: string
     contactPerson?: string
-    phone: string
+    phone?: string
     email?: string
     address?: string
     notes?: string
@@ -34,7 +34,7 @@ export function SupplierFormModal({ isOpen, onClose, initialData }: SupplierForm
     const formData = new FormData(e.currentTarget)
     const name = formData.get('name') as string
     const contactPerson = (formData.get('contactPerson') as string) || undefined
-    const phone = formData.get('phone') as string
+    const phone = (formData.get('phone') as string)?.trim() || undefined
     const email = (formData.get('email') as string) || undefined
     const address = (formData.get('address') as string) || undefined
     const notes = (formData.get('notes') as string) || undefined
@@ -94,11 +94,10 @@ export function SupplierFormModal({ isOpen, onClose, initialData }: SupplierForm
             defaultValue={initialData?.contactPerson}
           />
           <Input
-            label="Phone Number"
+            label="Phone Number (Optional)"
             name="phone"
             placeholder="e.g. 0771234567"
             defaultValue={initialData?.phone}
-            required
           />
         </div>
 

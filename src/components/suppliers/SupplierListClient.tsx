@@ -98,7 +98,7 @@ export function SupplierListClient({
                       </Link>
                     </td>
                     <td className="text-xs">{s.contactPerson || '-'}</td>
-                    <td className="text-xs font-mono">{s.phone}</td>
+                    <td className="text-xs font-mono">{s.phone || '-'}</td>
                     <td className="text-xs font-semibold">{formatCurrency(s.totalPurchases)}</td>
                     <td className={`text-xs font-bold ${s.outstandingBalance > 0 ? 'text-red-600' : 'text-slate-400'}`}>
                       {formatCurrency(s.outstandingBalance)}

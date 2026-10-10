@@ -50,7 +50,7 @@ export default async function SupplierDetailPage({
         </div>
         <div className="card p-4">
           <p className="text-xs font-semibold text-[var(--foreground-muted)] uppercase">Phone</p>
-          <p className="text-base font-mono font-bold text-[var(--foreground)] mt-1">{supplier.phone}</p>
+          <p className="text-base font-mono font-bold text-[var(--foreground)] mt-1">{supplier.phone || '-'}</p>
         </div>
         <div className="card p-4">
           <p className="text-xs font-semibold text-[var(--foreground-muted)] uppercase">Total Volume</p>
