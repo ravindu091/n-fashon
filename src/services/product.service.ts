@@ -96,6 +96,37 @@ export async function archiveProduct(id: string): Promise<{ product: IProduct; h
   return { product, hasActiveStock }
 }
 
+export async function deleteProduct(id: string): Promise<{ success: boolean; deletedVariantsCount: number }> {
+  await connectDB()
+  const product = await Product.findById(id)
+  if (!product) throw new Error('Product not found')
+
+  // Check for active stock batches with positive remaining quantity
+  const activeBatches = await StockBatch.find({
+    productId: id,
+    status: 'active',
+    remainingQty: { $gt: 0 },
+  })
+
+  if (activeBatches.length > 0) {
+    const totalRemaining = activeBatches.reduce((sum, b) => sum + b.remainingQty, 0)
+    throw new Error(
+      `Cannot delete "${product.name}". It currently has ${totalRemaining} unit(s) of active stock in inventory. Please adjust stock before deleting, or use Archive instead.`
+    )
+  }
+
+  // Delete all variants associated with this product
+  const variantsResult = await ProductVariant.deleteMany({ productId: id })
+
+  // Delete any depleted batches associated with this product
+  await StockBatch.deleteMany({ productId: id })
+
+  // Delete product document
+  await Product.findByIdAndDelete(id)
+
+  return { success: true, deletedVariantsCount: variantsResult.deletedCount }
+}
+
 export async function getProducts(filters: ProductFilters): Promise<PaginatedResult<any>> {
   await connectDB()
   const {

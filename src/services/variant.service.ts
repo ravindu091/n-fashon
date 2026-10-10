@@ -105,3 +105,32 @@ export async function toggleVariantStatus(id: string) {
   await variant.save()
   return variant
 }
+
+export async function deleteVariant(id: string): Promise<{ success: boolean }> {
+  await connectDB()
+  const variant = await ProductVariant.findById(id)
+  if (!variant) throw new Error('Variant not found')
+
+  // Check for active stock batches with positive remaining quantity
+  const activeBatches = await StockBatch.find({
+    variantId: id,
+    status: 'active',
+    remainingQty: { $gt: 0 },
+  })
+
+  if (activeBatches.length > 0) {
+    const totalRemaining = activeBatches.reduce((sum, b) => sum + b.remainingQty, 0)
+    throw new Error(
+      `Cannot delete variant "${variant.code}". It currently has ${totalRemaining} unit(s) of active stock in inventory. Please adjust stock before deleting, or deactivate it instead.`
+    )
+  }
+
+  // Delete depleted batches associated with this variant
+  await StockBatch.deleteMany({ variantId: id })
+
+  // Delete variant document
+  await ProductVariant.findByIdAndDelete(id)
+
+  return { success: true }
+}
+

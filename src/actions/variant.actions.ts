@@ -5,6 +5,7 @@ import {
   createVariant,
   updateVariant,
   toggleVariantStatus,
+  deleteVariant,
   VariantData,
 } from '@/services/variant.service'
 import { revalidatePath } from 'next/cache'
@@ -43,3 +44,17 @@ export async function toggleVariantStatusAction(id: string, productId: string): 
     return { success: false, error: (err as Error).message }
   }
 }
+
+export async function deleteVariantAction(id: string, productId: string): Promise<ActionState> {
+  try {
+    await requireAuth(['admin', 'inventory_manager'])
+    const result = await deleteVariant(id)
+    revalidatePath('/products')
+    revalidatePath(`/products/${productId}`)
+    revalidatePath('/inventory')
+    return { success: true, data: JSON.parse(JSON.stringify(result)) }
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message }
+  }
+}
+

@@ -5,6 +5,7 @@ import {
   createProduct,
   updateProduct,
   archiveProduct,
+  deleteProduct,
   ProductData,
 } from '@/services/product.service'
 import { revalidatePath } from 'next/cache'
@@ -43,3 +44,16 @@ export async function archiveProductAction(id: string): Promise<ActionState> {
     return { success: false, error: (err as Error).message }
   }
 }
+
+export async function deleteProductAction(id: string): Promise<ActionState> {
+  try {
+    await requireAuth(['admin', 'inventory_manager'])
+    const result = await deleteProduct(id)
+    revalidatePath('/products')
+    revalidatePath('/inventory')
+    return { success: true, data: JSON.parse(JSON.stringify(result)) }
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message }
+  }
+}
+

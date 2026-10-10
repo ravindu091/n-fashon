@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Plus, Search, Filter, Shirt, Archive, Edit } from 'lucide-react'
+import { Plus, Search, Filter, Shirt, Archive, Edit, Trash2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { ProductFormModal } from '@/components/forms/ProductFormModal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { archiveProductAction } from '@/actions/product.actions'
+import { archiveProductAction, deleteProductAction } from '@/actions/product.actions'
 import { formatCurrency } from '@/utils/currency'
 import { formatDate } from '@/utils/date'
 
@@ -30,14 +30,41 @@ export function ProductListClient({
   const [editingProduct, setEditingProduct] = useState<any | null>(null)
   const [archivingProduct, setArchivingProduct] = useState<any | null>(null)
   const [isArchiving, setIsArchiving] = useState(false)
+  const [deletingProduct, setDeletingProduct] = useState<any | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [errorFeedback, setErrorFeedback] = useState<string | null>(null)
+  const [successFeedback, setSuccessFeedback] = useState<string | null>(null)
 
   const handleArchive = async () => {
     if (!archivingProduct) return
     setIsArchiving(true)
+    setErrorFeedback(null)
+    setSuccessFeedback(null)
     await archiveProductAction(archivingProduct._id)
     setIsArchiving(false)
     setArchivingProduct(null)
   }
+
+  const handleDelete = async () => {
+    if (!deletingProduct) return
+    setIsDeleting(true)
+    setErrorFeedback(null)
+    setSuccessFeedback(null)
+    try {
+      const res = await deleteProductAction(deletingProduct._id.toString())
+      if (!res.success) {
+        setErrorFeedback(res.error || 'Failed to delete product')
+      } else {
+        setSuccessFeedback(`Product "${deletingProduct.name}" was successfully deleted.`)
+        setDeletingProduct(null)
+      }
+    } catch (e: unknown) {
+      setErrorFeedback((e as Error)?.message || 'Failed to delete product')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
 
   return (
     <div className="space-y-4">
@@ -90,6 +117,23 @@ export function ProductListClient({
           </div>
         </form>
       </div>
+
+      {/* Feedback Alerts */}
+      {errorFeedback && (
+        <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+            <span>{errorFeedback}</span>
+          </div>
+          <button onClick={() => setErrorFeedback(null)} className="text-red-500 hover:text-red-700 font-bold ml-2">×</button>
+        </div>
+      )}
+      {successFeedback && (
+        <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center justify-between">
+          <span>{successFeedback}</span>
+          <button onClick={() => setSuccessFeedback(null)} className="text-emerald-500 hover:text-emerald-700 font-bold ml-2">×</button>
+        </div>
+      )}
 
       {/* Products Data Table */}
       <div className="card overflow-hidden">
@@ -150,13 +194,26 @@ export function ProductListClient({
                       </button>
                       {p.status === 'active' && (
                         <button
-                          onClick={() => setArchivingProduct(p)}
-                          className="p-1 hover:bg-red-50 rounded text-red-500 hover:text-red-700"
+                          onClick={() => {
+                            setErrorFeedback(null)
+                            setArchivingProduct(p)
+                          }}
+                          className="p-1 hover:bg-amber-50 rounded text-amber-600 hover:text-amber-700"
                           title="Archive Product"
                         >
                           <Archive className="w-3.5 h-3.5" />
                         </button>
                       )}
+                      <button
+                        onClick={() => {
+                          setErrorFeedback(null)
+                          setDeletingProduct(p)
+                        }}
+                        className="p-1 hover:bg-red-50 rounded text-red-500 hover:text-red-700"
+                        title="Delete Product"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -186,6 +243,18 @@ export function ProductListClient({
         message={`Are you sure you want to archive "${archivingProduct?.name}" (${archivingProduct?.code})? If this product has active stock remaining, an audit record will be preserved.`}
         confirmText="Archive"
         isLoading={isArchiving}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!deletingProduct}
+        onClose={() => setDeletingProduct(null)}
+        onConfirm={handleDelete}
+        title="Delete Product"
+        message={`Are you sure you want to permanently delete "${deletingProduct?.name}" (${deletingProduct?.code}) and all associated variants? This cannot be undone. Products with active inventory stock cannot be deleted.`}
+        confirmText="Delete Product"
+        variant="danger"
+        isLoading={isDeleting}
       />
     </div>
   )

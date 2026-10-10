@@ -2,14 +2,15 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Edit, Archive, Shirt, Layers, AlertTriangle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ArrowLeft, Plus, Edit, Archive, Shirt, Layers, AlertTriangle, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { VariantFormModal } from '@/components/forms/VariantFormModal'
 import { ProductFormModal } from '@/components/forms/ProductFormModal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { toggleVariantStatusAction } from '@/actions/variant.actions'
-import { archiveProductAction } from '@/actions/product.actions'
+import { toggleVariantStatusAction, deleteVariantAction } from '@/actions/variant.actions'
+import { archiveProductAction, deleteProductAction } from '@/actions/product.actions'
 import { formatCurrency } from '@/utils/currency'
 import { formatDate } from '@/utils/date'
 
@@ -20,17 +21,69 @@ interface ProductDetailClientProps {
 }
 
 export function ProductDetailClient({ product, variants, categories = [] }: ProductDetailClientProps) {
+  const router = useRouter()
   const [isVariantModalOpen, setIsVariantModalOpen] = useState(false)
   const [editingVariant, setEditingVariant] = useState<any | null>(null)
   const [isEditProductOpen, setIsEditProductOpen] = useState(false)
   const [isArchiveOpen, setIsArchiveOpen] = useState(false)
   const [isArchiving, setIsArchiving] = useState(false)
+  const [isDeleteProductOpen, setIsDeleteProductOpen] = useState(false)
+  const [isDeletingProduct, setIsDeletingProduct] = useState(false)
+  const [deletingVariant, setDeletingVariant] = useState<any | null>(null)
+  const [isDeletingVariant, setIsDeletingVariant] = useState(false)
+  const [errorFeedback, setErrorFeedback] = useState<string | null>(null)
+  const [successFeedback, setSuccessFeedback] = useState<string | null>(null)
 
   const handleArchive = async () => {
     setIsArchiving(true)
+    setErrorFeedback(null)
+    setSuccessFeedback(null)
     await archiveProductAction(product._id)
     setIsArchiving(false)
     setIsArchiveOpen(false)
+  }
+
+  const handleDeleteProduct = async () => {
+    setIsDeletingProduct(true)
+    setErrorFeedback(null)
+    setSuccessFeedback(null)
+    try {
+      const res = await deleteProductAction(product._id)
+      if (!res.success) {
+        setErrorFeedback(res.error || 'Failed to delete product')
+        setIsDeleteProductOpen(false)
+      } else {
+        router.push('/products')
+      }
+    } catch (e: unknown) {
+      setErrorFeedback((e as Error)?.message || 'Failed to delete product')
+      setIsDeleteProductOpen(false)
+    } finally {
+      setIsDeletingProduct(false)
+    }
+  }
+
+  const handleDeleteVariant = async () => {
+    if (!deletingVariant) return
+    setIsDeletingVariant(true)
+    setErrorFeedback(null)
+    setSuccessFeedback(null)
+    try {
+      const res = await deleteVariantAction(deletingVariant._id, product._id)
+      if (!res.success) {
+        setErrorFeedback(res.error || 'Failed to delete variant')
+        setDeletingVariant(null)
+      } else {
+        setSuccessFeedback(`Variant "${deletingVariant.code}" deleted successfully.`)
+        setDeletingVariant(null)
+        router.refresh()
+      }
+    } catch (e: unknown) {
+      setErrorFeedback((e as Error)?.message || 'Failed to delete variant')
+      setDeletingVariant(null)
+    } finally {
+      setIsDeletingVariant(false)
+    }
   }
 
   const handleToggleVariant = async (variantId: string) => {
@@ -67,15 +120,36 @@ export function ProductDetailClient({ product, variants, categories = [] }: Prod
             Edit Product
           </Button>
           {product.status === 'active' && (
-            <Button variant="outline" size="sm" onClick={() => setIsArchiveOpen(true)} className="text-red-600 hover:bg-red-50" leftIcon={<Archive className="w-3.5 h-3.5" />}>
+            <Button variant="outline" size="sm" onClick={() => { setErrorFeedback(null); setIsArchiveOpen(true) }} className="text-amber-600 hover:bg-amber-50" leftIcon={<Archive className="w-3.5 h-3.5" />}>
               Archive
             </Button>
           )}
+          <Button variant="outline" size="sm" onClick={() => { setErrorFeedback(null); setIsDeleteProductOpen(true) }} className="text-red-600 hover:bg-red-50 hover:border-red-200" leftIcon={<Trash2 className="w-3.5 h-3.5" />}>
+            Delete
+          </Button>
           <Button variant="primary" size="sm" onClick={() => setIsVariantModalOpen(true)} leftIcon={<Plus className="w-3.5 h-3.5" />}>
             Add Variant
           </Button>
         </div>
       </div>
+
+      {/* Feedback Alerts */}
+      {errorFeedback && (
+        <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+            <span>{errorFeedback}</span>
+          </div>
+          <button onClick={() => setErrorFeedback(null)} className="text-red-500 hover:text-red-700 font-bold ml-2">×</button>
+        </div>
+      )}
+      {successFeedback && (
+        <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center justify-between">
+          <span>{successFeedback}</span>
+          <button onClick={() => setSuccessFeedback(null)} className="text-emerald-500 hover:text-emerald-700 font-bold ml-2">×</button>
+        </div>
+      )}
+
 
       {/* Product Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -189,6 +263,16 @@ export function ProductDetailClient({ product, variants, categories = [] }: Prod
                       >
                         {v.status === 'active' ? 'Deactivate' : 'Activate'}
                       </button>
+                      <button
+                        onClick={() => {
+                          setErrorFeedback(null)
+                          setDeletingVariant(v)
+                        }}
+                        className="p-1 hover:bg-red-50 rounded text-red-500 hover:text-red-700 ml-1 inline-flex items-center"
+                        title="Delete Variant"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -227,6 +311,30 @@ export function ProductDetailClient({ product, variants, categories = [] }: Prod
         message={`Are you sure you want to archive "${product.name}"? You have ${totalStock} units currently in stock.`}
         confirmText="Archive Product"
         isLoading={isArchiving}
+      />
+
+      {/* Delete Product Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteProductOpen}
+        onClose={() => setIsDeleteProductOpen(false)}
+        onConfirm={handleDeleteProduct}
+        title="Delete Product"
+        message={`Are you sure you want to permanently delete "${product.name}" (${product.code}) and all its variants? This cannot be undone. Products with active inventory stock cannot be deleted.`}
+        confirmText="Delete Product"
+        variant="danger"
+        isLoading={isDeletingProduct}
+      />
+
+      {/* Delete Variant Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={!!deletingVariant}
+        onClose={() => setDeletingVariant(null)}
+        onConfirm={handleDeleteVariant}
+        title="Delete Variant"
+        message={`Are you sure you want to delete variant "${deletingVariant?.code}" (${deletingVariant?.size} / ${deletingVariant?.color})? This cannot be undone. Variants with active inventory stock cannot be deleted.`}
+        confirmText="Delete Variant"
+        variant="danger"
+        isLoading={isDeletingVariant}
       />
     </div>
   )
