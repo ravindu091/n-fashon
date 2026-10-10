@@ -2,11 +2,13 @@ import 'server-only'
 import mongoose from 'mongoose'
 import dns from 'dns'
 
-// Use reliable DNS resolvers (Google & Cloudflare) for Atlas SRV lookups on local environments
-try {
-  dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1'])
-} catch {
-  // fallback to system resolver
+// Only set custom DNS on local development (Windows) — avoid overriding Vercel's internal VPC resolvers
+if (process.env.NODE_ENV === 'development') {
+  try {
+    dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1'])
+  } catch {
+    // fallback
+  }
 }
 
 const MONGODB_URI = process.env.MONGODB_URI!
@@ -37,6 +39,7 @@ export async function connectDB(): Promise<typeof mongoose> {
       dbName: process.env.MONGODB_DB ?? 'reselling',
       bufferCommands: false,
       maxPoolSize: 10,
+      serverSelectionTimeoutMS: 10000,
     })
   }
 
