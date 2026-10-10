@@ -1,5 +1,13 @@
 import 'server-only'
 import mongoose from 'mongoose'
+import dns from 'dns'
+
+// Use reliable DNS resolvers (Google & Cloudflare) for Atlas SRV lookups on local environments
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1'])
+} catch {
+  // fallback to system resolver
+}
 
 const MONGODB_URI = process.env.MONGODB_URI!
 
