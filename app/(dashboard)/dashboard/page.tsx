@@ -101,24 +101,33 @@ export default async function DashboardPage() {
           subtitle="At landed batch cost"
           icon={<Shirt className="w-5 h-5" />}
         />
-        <KpiCard
-          title="Low Stock Alerts"
-          value={`${kpis.lowStockCount} items`}
-          subtitle="Requires replenishment"
-          icon={<AlertTriangle className="w-5 h-5 text-amber-500" />}
-        />
-        <KpiCard
-          title="Customer Outstanding"
-          value={formatCurrency(kpis.customerOutstanding)}
-          subtitle="Uncollected payments"
-          icon={<Users className="w-5 h-5" />}
-        />
-        <KpiCard
-          title="Supplier Outstanding"
-          value={formatCurrency(kpis.supplierOutstanding)}
-          subtitle="Payable purchase balances"
-          icon={<Truck className="w-5 h-5 text-red-500" />}
-        />
+        <Link href="/inventory" className="block hover:scale-[1.01] transition-transform" title="View inventory items">
+          <KpiCard
+            title="Low Stock Alerts"
+            value={`${kpis.lowStockCount} items`}
+            subtitle="Click to view stock breakdown →"
+            icon={<AlertTriangle className="w-5 h-5 text-amber-500" />}
+            className="hover:border-amber-300 transition-colors cursor-pointer"
+          />
+        </Link>
+        <Link href="/sales?paymentStatus=outstanding" className="block hover:scale-[1.01] transition-transform" title="View unpaid customer orders">
+          <KpiCard
+            title="Customer Outstanding"
+            value={formatCurrency(kpis.customerOutstanding)}
+            subtitle="Click to view unpaid orders →"
+            icon={<Users className="w-5 h-5 text-blue-600" />}
+            className="hover:border-blue-400 transition-colors cursor-pointer"
+          />
+        </Link>
+        <Link href="/purchases?paymentStatus=outstanding" className="block hover:scale-[1.01] transition-transform" title="View unpaid purchase orders">
+          <KpiCard
+            title="Supplier Outstanding"
+            value={formatCurrency(kpis.supplierOutstanding)}
+            subtitle="Click to view unpaid purchases →"
+            icon={<Truck className="w-5 h-5 text-red-500" />}
+            className="hover:border-red-400 transition-colors cursor-pointer"
+          />
+        </Link>
       </div>
 
       {/* Row 3: Charts */}

@@ -10,7 +10,7 @@ import connectDB from '@/lib/mongodb'
 export default async function PurchasesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; status?: string; page?: string }>
+  searchParams: Promise<{ search?: string; status?: string; paymentStatus?: string; page?: string }>
 }) {
   await connectDB()
   const params = await searchParams
@@ -19,6 +19,7 @@ export default async function PurchasesPage({
     getPurchases({
       search: params.search,
       status: params.status,
+      paymentStatus: params.paymentStatus,
       page: params.page ? Number(params.page) : 1,
       limit: 50,
     }),
@@ -50,6 +51,7 @@ export default async function PurchasesPage({
       variants={mappedVariants}
       currentSearch={params.search}
       currentStatus={params.status}
+      currentPaymentStatus={params.paymentStatus}
     />
   )
 }

@@ -15,6 +15,7 @@ interface PurchaseListClientProps {
   variants: any[]
   currentSearch?: string
   currentStatus?: string
+  currentPaymentStatus?: string
 }
 
 export function PurchaseListClient({
@@ -23,6 +24,7 @@ export function PurchaseListClient({
   variants,
   currentSearch = '',
   currentStatus = '',
+  currentPaymentStatus = '',
 }: PurchaseListClientProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
 
@@ -75,6 +77,13 @@ export function PurchaseListClient({
             <option value="partially_received">Partially Received</option>
             <option value="received">Received</option>
             <option value="cancelled">Cancelled</option>
+          </select>
+          <select name="paymentStatus" defaultValue={currentPaymentStatus} className="input sm:w-48 text-xs font-semibold text-[var(--foreground)]">
+            <option value="">All Payment Statuses</option>
+            <option value="outstanding">⚠️ Outstanding Balance (Unpaid & Partial)</option>
+            <option value="paid">Paid in Full</option>
+            <option value="partial">Partially Paid</option>
+            <option value="unpaid">Unpaid</option>
           </select>
           <Button type="submit" variant="outline" size="sm">
             Filter

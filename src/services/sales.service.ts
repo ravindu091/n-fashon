@@ -255,7 +255,13 @@ export async function getSales(filters: SaleFilters): Promise<PaginatedResult<IS
 
   const query: Record<string, unknown> = {}
   if (status) query.status = status
-  if (paymentStatus) query.paymentStatus = paymentStatus
+  if (paymentStatus) {
+    if (paymentStatus === 'outstanding') {
+      query.outstandingBalance = { $gt: 0 }
+    } else {
+      query.paymentStatus = paymentStatus
+    }
+  }
   if (channel) query.channel = channel
   if (customerId) query.customerId = new Types.ObjectId(customerId)
 

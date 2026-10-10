@@ -61,10 +61,11 @@ export default async function SalesPage({
             <option value="whatsapp">WhatsApp</option>
             <option value="other">Other</option>
           </select>
-          <select name="paymentStatus" defaultValue={params.paymentStatus || ''} className="input sm:w-40 text-xs">
+          <select name="paymentStatus" defaultValue={params.paymentStatus || ''} className="input sm:w-44 text-xs font-semibold">
             <option value="">All Payment Statuses</option>
-            <option value="paid">Paid</option>
-            <option value="partial">Partial</option>
+            <option value="outstanding">⚠️ Outstanding (Unpaid & Partial)</option>
+            <option value="paid">Paid in Full</option>
+            <option value="partial">Partially Paid</option>
             <option value="unpaid">Unpaid</option>
           </select>
           <Button type="submit" variant="outline" size="sm">

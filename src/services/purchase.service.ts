@@ -304,7 +304,13 @@ export async function getPurchases(filters: PurchaseFilters): Promise<PaginatedR
 
   const query: Record<string, unknown> = {}
   if (status) query.status = status
-  if (paymentStatus) query.paymentStatus = paymentStatus
+  if (paymentStatus) {
+    if (paymentStatus === 'outstanding') {
+      query.outstandingBalance = { $gt: 0 }
+    } else {
+      query.paymentStatus = paymentStatus
+    }
+  }
   if (supplierId) query.supplierId = new Types.ObjectId(supplierId)
 
   if (search) {
