@@ -40,20 +40,20 @@ export default async function SalesPage({
         </Link>
       </div>
 
-      {/* Filter Bar */}
-      <div className="card p-4 flex flex-col sm:flex-row gap-3">
-        <form method="GET" className="flex flex-1 flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-[var(--foreground-muted)]" />
+      {/* Standardized Filter Bar */}
+      <div className="filter-bar">
+        <form method="GET" className="flex flex-col lg:flex-row lg:items-center gap-2.5 w-full">
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               type="text"
               name="search"
               defaultValue={params.search}
               placeholder="Search by sale #, customer name, or garment..."
-              className="input pl-9 text-xs"
+              className="filter-input"
             />
           </div>
-          <select name="channel" defaultValue={params.channel || ''} className="input sm:w-40 text-xs">
+          <select name="channel" defaultValue={params.channel || ''} className="filter-select w-full sm:w-auto min-w-[140px]">
             <option value="">All Channels</option>
             <option value="physical">Physical</option>
             <option value="facebook">Facebook</option>
@@ -61,16 +61,23 @@ export default async function SalesPage({
             <option value="whatsapp">WhatsApp</option>
             <option value="other">Other</option>
           </select>
-          <select name="paymentStatus" defaultValue={params.paymentStatus || ''} className="input sm:w-44 text-xs font-semibold">
+          <select name="paymentStatus" defaultValue={params.paymentStatus || ''} className="filter-select w-full sm:w-auto min-w-[160px] font-semibold">
             <option value="">All Payment Statuses</option>
-            <option value="outstanding">⚠️ Outstanding (Unpaid & Partial)</option>
+            <option value="outstanding">⚠️ Outstanding</option>
             <option value="paid">Paid in Full</option>
             <option value="partial">Partially Paid</option>
             <option value="unpaid">Unpaid</option>
           </select>
-          <Button type="submit" variant="outline" size="sm">
-            Filter
-          </Button>
+          <div className="flex items-center gap-2">
+            <button type="submit" className="filter-btn btn-primary">
+              Filter
+            </button>
+            {(params.search || params.channel || params.paymentStatus) && (
+              <a href="/sales" className="filter-btn btn-outline text-slate-600 hover:text-slate-900" title="Clear all filters">
+                Reset
+              </a>
+            )}
+          </div>
         </form>
       </div>
 

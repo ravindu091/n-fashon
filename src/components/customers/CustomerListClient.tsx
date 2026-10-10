@@ -34,22 +34,29 @@ export function CustomerListClient({
         </Button>
       </div>
 
-      {/* Filter Bar */}
-      <div className="card p-4 flex flex-col sm:flex-row gap-3">
-        <form method="GET" className="flex flex-1 flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-[var(--foreground-muted)]" />
+      {/* Standardized Filter Bar */}
+      <div className="filter-bar">
+        <form method="GET" className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full">
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               type="text"
               name="search"
               defaultValue={currentSearch}
               placeholder="Search by customer name, phone, or code..."
-              className="input pl-9 text-xs"
+              className="filter-input"
             />
           </div>
-          <Button type="submit" variant="outline" size="sm">
-            Filter
-          </Button>
+          <div className="flex items-center gap-2">
+            <button type="submit" className="filter-btn btn-primary">
+              Filter
+            </button>
+            {currentSearch && (
+              <a href="/customers" className="filter-btn btn-outline text-slate-600 hover:text-slate-900" title="Clear search">
+                Reset
+              </a>
+            )}
+          </div>
         </form>
       </div>
 

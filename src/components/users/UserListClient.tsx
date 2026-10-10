@@ -244,40 +244,57 @@ export function UserListClient({
         />
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="card p-4 flex flex-col md:flex-row gap-3 items-center justify-between">
-        <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-[var(--foreground-muted)]" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by full name or email address..."
-            className="input pl-9 text-xs w-full"
-          />
-        </div>
+      {/* Standardized Filter and Search Bar */}
+      <div className="filter-bar">
+        <div className="flex flex-col md:flex-row md:items-center gap-2.5 w-full">
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by full name or email address..."
+              className="filter-input"
+            />
+          </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="input text-xs w-full md:w-44"
-          >
-            <option value="all">All Roles</option>
-            <option value="admin">Administrators</option>
-            <option value="inventory_manager">Inventory Managers</option>
-            <option value="sales_staff">Sales Staff</option>
-          </select>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="filter-select w-full sm:w-auto min-w-[160px]"
+            >
+              <option value="all">All Roles</option>
+              <option value="admin">Administrators</option>
+              <option value="inventory_manager">Inventory Managers</option>
+              <option value="sales_staff">Sales Staff</option>
+            </select>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="input text-xs w-full md:w-36"
-          >
-            <option value="all">All Statuses</option>
-            <option value="active">Active Only</option>
-            <option value="inactive">Inactive Only</option>
-          </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="filter-select w-full sm:w-auto min-w-[140px]"
+            >
+              <option value="all">All Statuses</option>
+              <option value="active">Active Only</option>
+              <option value="inactive">Inactive Only</option>
+            </select>
+
+            {(search || roleFilter !== 'all' || statusFilter !== 'all') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch('')
+                  setRoleFilter('all')
+                  setStatusFilter('all')
+                }}
+                className="filter-btn btn-outline text-slate-600 hover:text-slate-900"
+                title="Reset filters"
+              >
+                Reset
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
