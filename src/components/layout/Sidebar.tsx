@@ -17,12 +17,20 @@ import {
   BarChart3,
   History,
   Settings,
+  UserCog,
   Menu,
   ChevronLeft,
   LogOut,
 } from 'lucide-react'
 
-const NAV_ITEMS = [
+interface NavItem {
+  href: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  adminOnly?: boolean
+}
+
+const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/products', label: 'Products', icon: Shirt },
   { href: '/inventory', label: 'Inventory', icon: Boxes },
@@ -35,12 +43,22 @@ const NAV_ITEMS = [
   { href: '/returns', label: 'Returns & Exchanges', icon: RotateCcw },
   { href: '/reports', label: 'Reports & Analytics', icon: BarChart3 },
   { href: '/stock-movements', label: 'Movement History', icon: History },
+  { href: '/users', label: 'User Management', icon: UserCog, adminOnly: true },
   { href: '/settings', label: 'Settings', icon: Settings },
 ]
 
-export function Sidebar({ mobileOpen, setMobileOpen }: { mobileOpen: boolean; setMobileOpen: (open: boolean) => void }) {
+export function Sidebar({
+  mobileOpen,
+  setMobileOpen,
+  role = 'admin',
+}: {
+  mobileOpen: boolean
+  setMobileOpen: (open: boolean) => void
+  role?: string
+}) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const visibleNavItems = NAV_ITEMS.filter((item) => !item.adminOnly || role === 'admin')
 
   return (
     <>
@@ -85,7 +103,7 @@ export function Sidebar({ mobileOpen, setMobileOpen }: { mobileOpen: boolean; se
 
           {/* Navigation link list */}
           <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100dvh-130px)]">
-            {NAV_ITEMS.map((item) => {
+            {visibleNavItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
               return (

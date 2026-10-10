@@ -15,6 +15,7 @@ const PROTECTED_PATHS = [
   '/returns',
   '/reports',
   '/stock-movements',
+  '/users',
   '/settings',
 ]
 
@@ -41,6 +42,11 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('callbackUrl', pathname)
     return NextResponse.redirect(loginUrl)
+  }
+
+  // Enforce admin-only access for user management
+  if (pathname.startsWith('/users') && session.role !== 'admin') {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return NextResponse.next()

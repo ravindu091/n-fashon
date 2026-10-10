@@ -3,7 +3,31 @@
 import React from 'react'
 import { Menu, Bell, User } from 'lucide-react'
 
-export function TopNav({ onMenuClick }: { onMenuClick: () => void }) {
+export function TopNav({
+  onMenuClick,
+  user,
+}: {
+  onMenuClick: () => void
+  user?: { name: string; email: string; role: string } | null
+}) {
+  const userName = user?.name || 'Admin User'
+  const userRole = user?.role || 'admin'
+  const roleLabel =
+    userRole === 'admin'
+      ? 'Administrator'
+      : userRole === 'inventory_manager'
+      ? 'Inventory Manager'
+      : 'Sales Staff'
+
+  const initials =
+    userName
+      .split(' ')
+      .map((n) => n[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || 'AD'
+
   return (
     <header className="topnav justify-between">
       <div className="flex items-center gap-3">
@@ -21,11 +45,11 @@ export function TopNav({ onMenuClick }: { onMenuClick: () => void }) {
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 pl-3 border-l border-[var(--border)]">
           <div className="w-8 h-8 rounded-full bg-[var(--primary-light)] text-[var(--primary)] flex items-center justify-center text-xs font-semibold">
-            AD
+            {initials}
           </div>
           <div className="hidden sm:block text-left">
-            <p className="text-xs font-semibold text-[var(--foreground)] leading-tight">Admin User</p>
-            <p className="text-[10px] text-[var(--foreground-muted)]">Store Owner</p>
+            <p className="text-xs font-semibold text-[var(--foreground)] leading-tight">{userName}</p>
+            <p className="text-[10px] text-[var(--foreground-muted)]">{roleLabel}</p>
           </div>
         </div>
       </div>

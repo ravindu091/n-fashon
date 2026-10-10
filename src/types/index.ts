@@ -9,6 +9,26 @@ export interface SessionPayload {
 
 export type UserRole = SessionPayload['role']
 
+export interface SafeUser {
+  _id: string
+  name: string
+  email: string
+  role: UserRole
+  isActive: boolean
+  lastLoginAt?: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UserStats {
+  total: number
+  adminCount: number
+  inventoryCount: number
+  salesCount: number
+  activeCount: number
+  inactiveCount: number
+}
+
 // ── Currency / formatting ──────────────────────────────────────────────────────
 export interface CurrencyConfig {
   code: string   // e.g. "LKR"
