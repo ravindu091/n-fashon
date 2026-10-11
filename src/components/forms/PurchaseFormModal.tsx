@@ -102,7 +102,7 @@ export function PurchaseFormModal({
       const res = await createPurchaseAction({
         supplierId,
         supplierName: selectedSupplier.name,
-        supplierInvoiceNumber: invoiceNumber || undefined,
+        supplierInvoiceNumber: invoiceNumber.trim() || undefined,
         purchaseDate,
         expectedDeliveryDate: expectedDate || undefined,
         lines: processedLines,
@@ -149,8 +149,8 @@ export function PurchaseFormModal({
           </div>
 
           <Input
-            label="Supplier Invoice #"
-            placeholder="INV-9821"
+            label="Supplier Invoice # (Optional)"
+            placeholder="e.g. INV-9821 (optional)"
             value={invoiceNumber}
             onChange={(e) => setInvoiceNumber(e.target.value)}
           />

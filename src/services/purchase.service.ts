@@ -81,7 +81,7 @@ export async function createPurchase(data: CreatePurchaseInput, userId: string) 
     purchaseNumber,
     supplierId: new Types.ObjectId(data.supplierId),
     supplierName: data.supplierName,
-    supplierInvoiceNumber: data.supplierInvoiceNumber,
+    supplierInvoiceNumber: data.supplierInvoiceNumber?.trim() || undefined,
     purchaseDate: new Date(data.purchaseDate),
     expectedDeliveryDate: data.expectedDeliveryDate ? new Date(data.expectedDeliveryDate) : undefined,
     lines: processedLines,

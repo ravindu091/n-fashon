@@ -62,7 +62,7 @@ const PurchaseSchema = new Schema<IPurchase>(
     purchaseNumber:         { type: String, required: true, unique: true },
     supplierId:             { type: Schema.Types.ObjectId, ref: 'Supplier', required: true },
     supplierName:           { type: String, required: true },
-    supplierInvoiceNumber:  { type: String },
+    supplierInvoiceNumber:  { type: String, trim: true },
     purchaseDate:           { type: Date, required: true },
     expectedDeliveryDate:   { type: Date },
     lines:                  { type: [PurchaseLineSchema], default: [] },
