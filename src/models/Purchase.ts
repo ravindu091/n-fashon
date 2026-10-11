@@ -36,6 +36,11 @@ export interface IPurchase extends Document {
   status: PurchaseStatus
   notes?: string
   createdBy: string
+  reversedAt?: Date
+  reversalReason?: string
+  reversedBy?: string
+  reversedByName?: string
+  supplierRefundOption?: 'refund' | 'credit'
   createdAt: Date
   updatedAt: Date
 }
@@ -74,9 +79,14 @@ const PurchaseSchema = new Schema<IPurchase>(
     amountPaid:             { type: Number, default: 0, min: 0 },
     outstandingBalance:     { type: Number, default: 0 },
     paymentStatus:          { type: String, enum: ['unpaid','partial','paid','refunded'], default: 'unpaid' },
-    status:                 { type: String, enum: ['draft','ordered','partially_received','received','cancelled'], default: 'draft' },
+    status:                 { type: String, enum: ['draft','ordered','partially_received','received','cancelled','reversed'], default: 'draft' },
     notes:                  { type: String },
     createdBy:              { type: String, required: true },
+    reversedAt:             { type: Date },
+    reversalReason:         { type: String },
+    reversedBy:             { type: String },
+    reversedByName:         { type: String },
+    supplierRefundOption:   { type: String, enum: ['refund','credit'] },
   },
   { timestamps: true }
 )

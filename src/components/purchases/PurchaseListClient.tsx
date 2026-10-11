@@ -52,6 +52,7 @@ export function PurchaseListClient({
       case 'ordered':
         return 'primary'
       case 'cancelled':
+      case 'reversed':
         return 'danger'
       default:
         return 'neutral'
@@ -112,6 +113,7 @@ export function PurchaseListClient({
             <option value="partially_received">Partially Received</option>
             <option value="received">Received</option>
             <option value="cancelled">Cancelled</option>
+            <option value="reversed">Reversed</option>
           </select>
           <select
             name="paymentStatus"

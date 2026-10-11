@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle, PackageCheck, DollarSign, XCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle, PackageCheck, DollarSign, XCircle, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { PurchaseReversalModal } from '@/components/forms/PurchaseReversalModal'
 import { markOrderedAction, addPurchasePaymentAction, cancelPurchaseAction } from '@/actions/purchase.actions'
 import { formatCurrency } from '@/utils/currency'
 import { formatDate } from '@/utils/date'
@@ -24,6 +25,7 @@ export function PurchaseDetailClient({ purchase }: PurchaseDetailClientProps) {
   const [isCancelOpen, setIsCancelOpen] = useState(false)
   const [isCancelling, setIsCancelling] = useState(false)
 
+  const [isReverseOpen, setIsReverseOpen] = useState(false)
   const [isMarkingOrdered, setIsMarkingOrdered] = useState(false)
 
   const handleMarkOrdered = async () => {
@@ -47,8 +49,11 @@ export function PurchaseDetailClient({ purchase }: PurchaseDetailClientProps) {
     setIsCancelOpen(false)
   }
 
-  const canReceive = purchase.status === 'ordered' || purchase.status === 'partially_received'
+  const isCancelledOrReversed = purchase.status === 'cancelled' || purchase.status === 'reversed'
+  const canReceive = !isCancelledOrReversed && (purchase.status === 'ordered' || purchase.status === 'partially_received')
   const canCancel = purchase.status === 'draft' || (purchase.status === 'ordered' && purchase.lines.every((l: any) => l.receivedQty === 0))
+  const canReverse = !isCancelledOrReversed && (purchase.status === 'received' || purchase.status === 'partially_received' || (purchase.status === 'ordered' && purchase.lines.some((l: any) => l.receivedQty > 0)))
+  const canPay = !isCancelledOrReversed && purchase.outstandingBalance > 0
 
   return (
     <div className="space-y-6">
@@ -63,10 +68,10 @@ export function PurchaseDetailClient({ purchase }: PurchaseDetailClientProps) {
               <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
                 {purchase.purchaseNumber}
               </span>
-              <Badge variant={purchase.status === 'received' ? 'success' : purchase.status === 'partially_received' ? 'info' : 'neutral'}>
+              <Badge variant={purchase.status === 'received' ? 'success' : purchase.status === 'partially_received' ? 'info' : isCancelledOrReversed ? 'danger' : 'neutral'}>
                 {purchase.status.replace('_', ' ')}
               </Badge>
-              <Badge variant={purchase.paymentStatus === 'paid' ? 'success' : 'warning'}>
+              <Badge variant={purchase.paymentStatus === 'paid' ? 'success' : isCancelledOrReversed ? 'neutral' : 'warning'}>
                 Payment: {purchase.paymentStatus}
               </Badge>
             </div>
@@ -96,7 +101,7 @@ export function PurchaseDetailClient({ purchase }: PurchaseDetailClientProps) {
             </Link>
           )}
 
-          {purchase.outstandingBalance > 0 && (
+          {canPay && (
             <Button
               variant="outline"
               size="sm"
@@ -118,8 +123,59 @@ export function PurchaseDetailClient({ purchase }: PurchaseDetailClientProps) {
               Cancel PO
             </Button>
           )}
+
+          {canReverse && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsReverseOpen(true)}
+              className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+              leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
+            >
+              Reverse Purchase Order
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Reversal / Cancellation Notice Banner */}
+      {isCancelledOrReversed && (
+        <div className="p-4 rounded-xl border border-red-200 bg-red-50/70 text-red-900 flex items-start gap-3">
+          <RotateCcw className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+          <div className="space-y-1 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm text-red-800">
+                Purchase Order {purchase.status === 'reversed' ? 'Reversed' : 'Cancelled'}
+              </span>
+              {purchase.reversedAt && (
+                <span className="text-[11px] text-red-600">
+                  on {formatDate(purchase.reversedAt)}
+                </span>
+              )}
+            </div>
+            {purchase.reversalReason && (
+              <p className="text-red-800">
+                <strong>Reason:</strong> {purchase.reversalReason}
+              </p>
+            )}
+            {purchase.reversedByName && (
+              <p className="text-[11px] text-red-700">
+                Actioned by: <strong>{purchase.reversedByName}</strong>
+              </p>
+            )}
+            {purchase.supplierRefundOption && (
+              <p className="text-[11px] text-red-700">
+                Payment reconciliation:{' '}
+                <strong>
+                  {purchase.supplierRefundOption === 'refund'
+                    ? 'Supplier refund issued (Cash/Bank)'
+                    : 'Retained as supplier advance credit'}
+                </strong>
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Info Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -260,6 +316,13 @@ export function PurchaseDetailClient({ purchase }: PurchaseDetailClientProps) {
         message="Are you sure you want to cancel this purchase order? This action cannot be undone."
         confirmText="Cancel PO"
         isLoading={isCancelling}
+      />
+
+      {/* Reversal Modal */}
+      <PurchaseReversalModal
+        isOpen={isReverseOpen}
+        onClose={() => setIsReverseOpen(false)}
+        purchase={purchase}
       />
     </div>
   )

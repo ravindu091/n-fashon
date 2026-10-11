@@ -7,6 +7,8 @@ import {
   receivePurchaseLines,
   addPurchasePayment,
   cancelPurchase,
+  checkPurchaseReversalEligibility,
+  reversePurchaseOrder,
   CreatePurchaseInput,
   ReceiveLineItemInput,
 } from '@/services/purchase.service'
@@ -76,6 +78,49 @@ export async function cancelPurchaseAction(purchaseId: string): Promise<ActionSt
     const purchase = await cancelPurchase(purchaseId, session.userId)
     revalidatePath('/purchases')
     revalidatePath(`/purchases/${purchaseId}`)
+    return { success: true, data: JSON.parse(JSON.stringify(purchase)) }
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message }
+  }
+}
+
+export async function checkPurchaseReversalEligibilityAction(
+  purchaseId: string
+): Promise<ActionState> {
+  try {
+    await requireAuth(['admin', 'inventory_manager'])
+    const eligibility = await checkPurchaseReversalEligibility(purchaseId)
+    return { success: true, data: eligibility }
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message }
+  }
+}
+
+export async function reversePurchaseOrderAction(
+  purchaseId: string,
+  reason: string,
+  supplierRefundOption: 'refund' | 'credit' = 'credit'
+): Promise<ActionState> {
+  try {
+    const session = await requireAuth(['admin', 'inventory_manager'])
+    const purchase = await reversePurchaseOrder({
+      purchaseId,
+      reason,
+      supplierRefundOption,
+      userId: session.userId,
+      userName: session.name || 'User',
+    })
+
+    revalidatePath('/purchases')
+    revalidatePath(`/purchases/${purchaseId}`)
+    revalidatePath('/inventory')
+    revalidatePath('/batches')
+    revalidatePath('/stock-movements')
+    revalidatePath('/suppliers')
+    revalidatePath(`/suppliers/${purchase.supplierId}`)
+    revalidatePath('/reports')
+    revalidatePath('/dashboard')
+
     return { success: true, data: JSON.parse(JSON.stringify(purchase)) }
   } catch (err: unknown) {
     return { success: false, error: (err as Error).message }

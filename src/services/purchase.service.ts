@@ -5,7 +5,7 @@ import { Supplier } from '@/models/Supplier'
 import { StockBatch } from '@/models/StockBatch'
 import { StockMovement } from '@/models/StockMovement'
 import { generatePurchaseNumber, generateBatchCode } from '@/services/codegen.service'
-import type { PaginatedResult, PurchaseStatus, PaymentStatus } from '@/types'
+import type { PaginatedResult, PurchaseStatus, PaymentStatus, PurchaseReversalEligibility } from '@/types'
 import { Types } from 'mongoose'
 
 export interface CreatePurchaseLineInput {
@@ -285,6 +285,205 @@ export async function cancelPurchase(purchaseId: string, _userId: string) {
   })
 
   purchase.status = 'cancelled'
+  await purchase.save()
+  return purchase
+}
+
+export async function checkPurchaseReversalEligibility(
+  purchaseId: string
+): Promise<PurchaseReversalEligibility> {
+  await connectDB()
+  const purchase = await Purchase.findById(purchaseId)
+  if (!purchase) throw new Error('Purchase not found')
+
+  if (purchase.status === 'cancelled' || purchase.status === 'reversed') {
+    return {
+      canReverse: false,
+      isReceived: false,
+      batches: [],
+      totalReceivedQty: 0,
+      totalSoldQty: 0,
+      totalRemainingQty: 0,
+      totalCost: purchase.totalCost,
+      amountPaid: purchase.amountPaid,
+      outstandingBalance: purchase.outstandingBalance,
+      blockReason: `Purchase order ${purchase.purchaseNumber} has already been ${purchase.status}.`,
+    }
+  }
+
+  // Find all batches created from this purchase
+  const batches = await StockBatch.find({ purchaseId: purchase._id }).lean()
+  const isReceived = batches.length > 0 || purchase.lines.some((l) => l.receivedQty > 0)
+
+  if (!isReceived) {
+    // Unreceived PO (draft or ordered)
+    return {
+      canReverse: true,
+      isReceived: false,
+      batches: [],
+      totalReceivedQty: 0,
+      totalSoldQty: 0,
+      totalRemainingQty: 0,
+      totalCost: purchase.totalCost,
+      amountPaid: purchase.amountPaid,
+      outstandingBalance: purchase.outstandingBalance,
+    }
+  }
+
+  let totalReceivedQty = 0
+  let totalSoldQty = 0
+  let totalRemainingQty = 0
+  const batchItems = batches.map((b) => {
+    const starting = b.startingQty
+    const remaining = b.remainingQty
+    const sold = Math.max(0, starting - remaining)
+    const isConsumed = sold > 0
+
+    totalReceivedQty += starting
+    totalRemainingQty += remaining
+    totalSoldQty += sold
+
+    return {
+      batchId: b._id.toString(),
+      batchCode: b.batchCode,
+      variantCode: b.variantCode,
+      productName: b.productName,
+      size: b.size,
+      color: b.color,
+      startingQty: starting,
+      remainingQty: remaining,
+      soldQty: sold,
+      landedUnitCost: b.landedUnitCost,
+      isConsumed,
+    }
+  })
+
+  const hasConsumedBatches = totalSoldQty > 0
+  const canReverse = !hasConsumedBatches
+  const blockReason = hasConsumedBatches
+    ? `Cannot reverse Purchase Order ${purchase.purchaseNumber}: ${totalSoldQty} garment(s) have already been sold in customer orders. Reversing is only permitted when received stock is 100% intact.`
+    : undefined
+
+  return {
+    canReverse,
+    isReceived: true,
+    batches: batchItems,
+    totalReceivedQty,
+    totalSoldQty,
+    totalRemainingQty,
+    totalCost: purchase.totalCost,
+    amountPaid: purchase.amountPaid,
+    outstandingBalance: purchase.outstandingBalance,
+    blockReason,
+  }
+}
+
+export interface ReversePurchaseInput {
+  purchaseId: string
+  reason: string
+  supplierRefundOption?: 'refund' | 'credit'
+  userId: string
+  userName?: string
+}
+
+export async function reversePurchaseOrder(input: ReversePurchaseInput) {
+  await connectDB()
+  const { purchaseId, reason, supplierRefundOption = 'credit', userId, userName = 'User' } = input
+
+  if (!reason || reason.trim().length < 3) {
+    throw new Error('A valid reason for reversal is required (minimum 3 characters).')
+  }
+
+  const purchase = await Purchase.findById(purchaseId)
+  if (!purchase) throw new Error('Purchase not found')
+
+  if (purchase.status === 'cancelled' || purchase.status === 'reversed') {
+    throw new Error(`Purchase order ${purchase.purchaseNumber} has already been ${purchase.status}.`)
+  }
+
+  const batches = await StockBatch.find({ purchaseId: purchase._id })
+  const isReceived = batches.length > 0 || purchase.lines.some((l) => l.receivedQty > 0)
+
+  if (isReceived) {
+    // Check if any stock has already been sold
+    const soldBatches = batches.filter((b) => b.remainingQty < b.startingQty)
+    if (soldBatches.length > 0) {
+      const soldSummary = soldBatches
+        .map((b) => `${b.startingQty - b.remainingQty} pcs of ${b.productName} (${b.variantCode})`)
+        .join(', ')
+      throw new Error(
+        `Cannot reverse purchase order: ${soldSummary} have already been sold in customer sales orders. Stock must be 100% intact to reverse.`
+      )
+    }
+
+    // Rollback all batches & log StockMovements
+    for (const batch of batches) {
+      const beforeQty = batch.remainingQty
+
+      // Set batch to returned and remaining to 0
+      batch.status = 'returned'
+      batch.remainingQty = 0
+      batch.notes = `Reversed via PO ${purchase.purchaseNumber}: ${reason.trim()}`
+      await batch.save()
+
+      // Record negative StockMovement
+      await StockMovement.create({
+        variantId: batch.variantId,
+        batchId: batch._id,
+        productId: batch.productId,
+        variantCode: batch.variantCode,
+        productName: batch.productName,
+        size: batch.size,
+        color: batch.color,
+        type: 'supplier_return',
+        qtyChange: -batch.startingQty,
+        beforeQty,
+        afterQty: 0,
+        referenceType: 'Purchase',
+        referenceId: purchase._id,
+        referenceNumber: purchase.purchaseNumber,
+        reason: `Purchase order reversal: ${reason.trim()}`,
+        userId,
+        userName,
+        idempotencyKey: `rev-po-${purchase._id}-${batch._id}`,
+      })
+    }
+
+    // Reset lines receivedQty
+    purchase.lines.forEach((line) => {
+      line.receivedQty = 0
+    })
+  }
+
+  // Financial reconciliation on Supplier
+  if (supplierRefundOption === 'refund') {
+    // Supplier returned the money paid, so the unpaid debt is erased
+    await Supplier.findByIdAndUpdate(purchase.supplierId, {
+      $inc: {
+        totalPurchases: -purchase.totalCost,
+        outstandingBalance: -purchase.outstandingBalance,
+      },
+    })
+  } else {
+    // Retain as credit: the full totalCost is deducted from the supplier's balance,
+    // leaving a credit (negative balance) for any amount already paid.
+    await Supplier.findByIdAndUpdate(purchase.supplierId, {
+      $inc: {
+        totalPurchases: -purchase.totalCost,
+        outstandingBalance: -purchase.totalCost,
+      },
+    })
+  }
+
+  // Update Purchase record
+  purchase.status = 'reversed'
+  purchase.outstandingBalance = 0
+  purchase.reversedAt = new Date()
+  purchase.reversalReason = reason.trim()
+  purchase.reversedBy = userId
+  purchase.reversedByName = userName
+  purchase.supplierRefundOption = supplierRefundOption
+
   await purchase.save()
   return purchase
 }

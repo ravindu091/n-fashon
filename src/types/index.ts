@@ -65,8 +65,35 @@ export type ProductStatus = 'active' | 'archived'
 export type VariantStatus = 'active' | 'inactive'
 
 // ── Purchase types ────────────────────────────────────────────────────────────
-export type PurchaseStatus = 'draft' | 'ordered' | 'partially_received' | 'received' | 'cancelled'
+export type PurchaseStatus = 'draft' | 'ordered' | 'partially_received' | 'received' | 'cancelled' | 'reversed'
 export type PaymentStatus  = 'unpaid' | 'partial' | 'paid' | 'refunded'
+
+export interface ReversalBatchItem {
+  batchId: string
+  batchCode: string
+  variantCode: string
+  productName: string
+  size: string
+  color: string
+  startingQty: number
+  remainingQty: number
+  soldQty: number
+  landedUnitCost: number
+  isConsumed: boolean
+}
+
+export interface PurchaseReversalEligibility {
+  canReverse: boolean
+  isReceived: boolean
+  batches: ReversalBatchItem[]
+  totalReceivedQty: number
+  totalSoldQty: number
+  totalRemainingQty: number
+  totalCost: number
+  amountPaid: number
+  outstandingBalance: number
+  blockReason?: string
+}
 
 // ── Batch / inventory ─────────────────────────────────────────────────────────
 export type BatchStatus = 'active' | 'depleted' | 'returned' | 'damaged'
