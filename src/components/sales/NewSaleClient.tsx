@@ -62,7 +62,7 @@ export function NewSaleClient({ customers, variants, channels }: NewSaleClientPr
       return {
         value: v._id,
         label: `${v.productName} (${v.size} / ${v.color})`,
-        sublabel: `Code: ${v.code} | LKR ${(v.promoPrice || v.defaultSellingPrice).toLocaleString()}`,
+        sublabel: `Code: ${v.code} • LKR ${(v.promoPrice || v.defaultSellingPrice).toLocaleString()}`,
         badge: isOutOfStock ? '0 pcs' : `${v.currentStock} in stock`,
         badgeVariant: isOutOfStock
           ? ('danger' as const)
@@ -218,7 +218,7 @@ export function NewSaleClient({ customers, variants, channels }: NewSaleClientPr
                   max={activeVariant?.currentStock || 1}
                   value={addQty}
                   onChange={(e) => setAddQty(Number(e.target.value))}
-                  className="input text-xs font-bold"
+                  className="input text-xs font-bold h-[42px]"
                 />
               </div>
             </div>

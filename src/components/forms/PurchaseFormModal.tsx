@@ -56,7 +56,7 @@ export function PurchaseFormModal({
     return variants.map((v) => ({
       value: v._id,
       label: `${v.productName} (${v.size} / ${v.color})`,
-      sublabel: `Code: ${v.code} | Base Price: LKR ${v.defaultSellingPrice.toLocaleString()}`,
+      sublabel: `Code: ${v.code} • Base: LKR ${v.defaultSellingPrice.toLocaleString()}`,
       searchTerms: `${v.productName} ${v.code} ${v.size} ${v.color} ${v.productCode || ''}`,
     }))
   }, [variants])
@@ -240,7 +240,7 @@ export function PurchaseFormModal({
                     min="1"
                     value={line.orderedQty}
                     onChange={(e) => handleLineChange(idx, 'orderedQty', Number(e.target.value))}
-                    className="input text-xs h-[38px] w-full"
+                    className="input text-xs h-[42px] w-full"
                     required
                   />
                 </div>
@@ -256,7 +256,7 @@ export function PurchaseFormModal({
                     step="0.01"
                     value={line.unitBuyingCost}
                     onChange={(e) => handleLineChange(idx, 'unitBuyingCost', Number(e.target.value))}
-                    className="input text-xs h-[38px] w-full"
+                    className="input text-xs h-[42px] w-full"
                     required
                   />
                 </div>

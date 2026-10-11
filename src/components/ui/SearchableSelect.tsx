@@ -156,7 +156,7 @@ export function SearchableSelect({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`w-full h-[38px] px-3 py-1.5 flex items-center justify-between text-left text-xs rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-card text-[var(--foreground)] transition-colors focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-500/10 ${
+        className={`w-full min-h-[42px] px-3 py-1 flex items-center justify-between text-left text-xs rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-card text-[var(--foreground)] transition-colors focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-500/10 ${
           disabled ? 'opacity-60 cursor-not-allowed bg-slate-50' : 'hover:border-slate-400 cursor-pointer'
         } ${isOpen ? 'border-[var(--accent)] ring-2 ring-blue-500/10' : ''}`}
         aria-haspopup="listbox"
@@ -164,11 +164,13 @@ export function SearchableSelect({
       >
         <div className="flex items-center gap-2 min-w-0 flex-1 mr-1">
           {selectedOption ? (
-            <div className="flex items-center gap-2 min-w-0 truncate">
-              <span className="font-medium text-[var(--foreground)] truncate">{selectedOption.label}</span>
+            <div className="flex flex-col min-w-0 flex-1 justify-center py-0.5">
+              <span className="font-semibold text-[var(--foreground)] text-xs truncate leading-snug">
+                {selectedOption.label}
+              </span>
               {selectedOption.sublabel && (
-                <span className="text-[11px] text-[var(--foreground-muted)] shrink-0 truncate">
-                  ({selectedOption.sublabel})
+                <span className="text-[11px] text-[var(--foreground-muted)] truncate font-normal leading-tight mt-0.5">
+                  {selectedOption.sublabel}
                 </span>
               )}
             </div>
