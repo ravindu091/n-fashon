@@ -13,6 +13,7 @@ export interface ISupplier extends Document {
   status: SupplierStatus
   totalPurchases: number
   outstandingBalance: number
+  advanceBalance: number
   createdAt: Date
   updatedAt: Date
 }
@@ -29,6 +30,7 @@ const SupplierSchema = new Schema<ISupplier>(
     status:             { type: String, enum: ['active','inactive','archived'], default: 'active' },
     totalPurchases:     { type: Number, default: 0, min: 0 },
     outstandingBalance: { type: Number, default: 0 },
+    advanceBalance:     { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 )

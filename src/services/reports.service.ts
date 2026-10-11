@@ -329,6 +329,7 @@ export async function getDashboardKPIs() {
     lowStockAgg,
     suppliersAgg,
     customersAgg,
+    supplierAdvanceAgg,
   ] = await Promise.all([
     // Today's Sales
     Sale.aggregate([
@@ -390,15 +391,20 @@ export async function getDashboardKPIs() {
       },
       { $count: 'lowStockCount' },
     ]),
-    // Outstanding Supplier Balances
+    // Outstanding Supplier Balances (payables only)
     Supplier.aggregate([
-      { $match: { status: 'active' } },
+      { $match: { status: 'active', outstandingBalance: { $gt: 0 } } },
       { $group: { _id: null, total: { $sum: '$outstandingBalance' } } },
     ]),
-    // Outstanding Customer Balances
+    // Outstanding Customer Balances (receivables only)
     Customer.aggregate([
-      { $match: { status: 'active' } },
+      { $match: { status: 'active', outstandingBalance: { $gt: 0 } } },
       { $group: { _id: null, total: { $sum: '$outstandingBalance' } } },
+    ]),
+    // Supplier Advance Credits
+    Supplier.aggregate([
+      { $match: { status: 'active', advanceBalance: { $gt: 0 } } },
+      { $group: { _id: null, total: { $sum: '$advanceBalance' } } },
     ]),
   ])
 
@@ -415,6 +421,7 @@ export async function getDashboardKPIs() {
 
   const supplierOutstanding = suppliersAgg[0]?.total ?? 0
   const customerOutstanding = customersAgg[0]?.total ?? 0
+  const supplierAdvanceCredit = supplierAdvanceAgg[0]?.total ?? 0
 
   return {
     todayRevenue: Math.round(todayRevenue * 100) / 100,
@@ -427,5 +434,6 @@ export async function getDashboardKPIs() {
     lowStockCount,
     supplierOutstanding: Math.round(supplierOutstanding * 100) / 100,
     customerOutstanding: Math.round(customerOutstanding * 100) / 100,
+    supplierAdvanceCredit: Math.round(supplierAdvanceCredit * 100) / 100,
   }
 }

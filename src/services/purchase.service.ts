@@ -258,10 +258,20 @@ export async function addPurchasePayment(
 
   await purchase.save()
 
-  // Update supplier outstanding balance
-  await Supplier.findByIdAndUpdate(purchase.supplierId, {
-    $inc: { outstandingBalance: -amount },
-  })
+  // Update supplier outstanding balance & advance balance
+  const supplier = await Supplier.findById(purchase.supplierId)
+  if (supplier) {
+    if (_paymentMethod === 'advance_credit') {
+      if ((supplier.advanceBalance || 0) < amount) {
+        throw new Error(
+          `Insufficient supplier advance credit. Available: LKR ${(supplier.advanceBalance || 0).toLocaleString()}`
+        )
+      }
+      supplier.advanceBalance = (supplier.advanceBalance || 0) - amount
+    }
+    supplier.outstandingBalance = Math.max(0, supplier.outstandingBalance - amount)
+    await supplier.save()
+  }
 
   return purchase
 }
@@ -456,23 +466,14 @@ export async function reversePurchaseOrder(input: ReversePurchaseInput) {
   }
 
   // Financial reconciliation on Supplier
-  if (supplierRefundOption === 'refund') {
-    // Supplier returned the money paid, so the unpaid debt is erased
-    await Supplier.findByIdAndUpdate(purchase.supplierId, {
-      $inc: {
-        totalPurchases: -purchase.totalCost,
-        outstandingBalance: -purchase.outstandingBalance,
-      },
-    })
-  } else {
-    // Retain as credit: the full totalCost is deducted from the supplier's balance,
-    // leaving a credit (negative balance) for any amount already paid.
-    await Supplier.findByIdAndUpdate(purchase.supplierId, {
-      $inc: {
-        totalPurchases: -purchase.totalCost,
-        outstandingBalance: -purchase.totalCost,
-      },
-    })
+  const supplier = await Supplier.findById(purchase.supplierId)
+  if (supplier) {
+    supplier.totalPurchases = Math.max(0, supplier.totalPurchases - purchase.totalCost)
+    supplier.outstandingBalance = Math.max(0, supplier.outstandingBalance - purchase.outstandingBalance)
+    if (supplierRefundOption === 'credit' && purchase.amountPaid > 0) {
+      supplier.advanceBalance = (supplier.advanceBalance || 0) + purchase.amountPaid
+    }
+    await supplier.save()
   }
 
   // Update Purchase record

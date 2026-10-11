@@ -146,7 +146,11 @@ export default async function DashboardPage() {
           <KpiCard
             title="Supplier Outstanding"
             value={formatCurrency(kpis.supplierOutstanding)}
-            subtitle="Click to view unpaid purchases →"
+            subtitle={
+              (kpis.supplierAdvanceCredit ?? 0) > 0
+                ? `${formatCurrency(kpis.supplierAdvanceCredit!)} advance credit available`
+                : 'Click to view unpaid purchases →'
+            }
             icon={<Truck className="w-5 h-5 text-red-500" />}
             className="hover:border-red-400 transition-colors cursor-pointer"
           />

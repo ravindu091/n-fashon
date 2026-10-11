@@ -30,6 +30,7 @@ export async function createSupplier(data: SupplierData, _userId: string) {
     status: 'active',
     totalPurchases: 0,
     outstandingBalance: 0,
+    advanceBalance: 0,
   })
   return supplier
 }

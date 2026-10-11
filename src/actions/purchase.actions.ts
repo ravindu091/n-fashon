@@ -66,6 +66,9 @@ export async function addPurchasePaymentAction(
     const purchase = await addPurchasePayment(purchaseId, amount, method, session.userId)
     revalidatePath('/purchases')
     revalidatePath(`/purchases/${purchaseId}`)
+    revalidatePath('/suppliers')
+    revalidatePath('/dashboard')
+    revalidatePath('/reports')
     return { success: true, data: JSON.parse(JSON.stringify(purchase)) }
   } catch (err: unknown) {
     return { success: false, error: (err as Error).message }

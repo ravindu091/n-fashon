@@ -43,7 +43,7 @@ export default async function SupplierDetailPage({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="card p-4">
           <p className="text-xs font-semibold text-[var(--foreground-muted)] uppercase">Contact Person</p>
           <p className="text-base font-bold text-[var(--foreground)] mt-1">{supplier.contactPerson || '-'}</p>
@@ -57,9 +57,15 @@ export default async function SupplierDetailPage({
           <p className="text-base font-bold text-[var(--foreground)] mt-1">{formatCurrency(supplier.totalPurchases)}</p>
         </div>
         <div className="card p-4">
-          <p className="text-xs font-semibold text-[var(--foreground-muted)] uppercase">Outstanding Balance</p>
-          <p className={`text-base font-bold mt-1 ${supplier.outstandingBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+          <p className="text-xs font-semibold text-[var(--foreground-muted)] uppercase">Outstanding Payable</p>
+          <p className={`text-base font-bold mt-1 ${supplier.outstandingBalance > 0 ? 'text-red-600' : 'text-slate-400'}`}>
             {formatCurrency(supplier.outstandingBalance)}
+          </p>
+        </div>
+        <div className="card p-4">
+          <p className="text-xs font-semibold text-[var(--foreground-muted)] uppercase">Advance Credit</p>
+          <p className={`text-base font-bold mt-1 ${(supplier.advanceBalance ?? 0) > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+            {formatCurrency(supplier.advanceBalance ?? 0)}
           </p>
         </div>
       </div>

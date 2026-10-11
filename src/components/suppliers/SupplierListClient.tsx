@@ -132,8 +132,17 @@ export function SupplierListClient({
                     <td className="text-xs">{s.contactPerson || '-'}</td>
                     <td className="text-xs font-mono">{s.phone || '-'}</td>
                     <td className="text-xs font-semibold">{formatCurrency(s.totalPurchases)}</td>
-                    <td className={`text-xs font-bold ${s.outstandingBalance > 0 ? 'text-red-600' : 'text-slate-400'}`}>
-                      {formatCurrency(s.outstandingBalance)}
+                    <td className="text-xs font-bold">
+                      <span className={s.outstandingBalance > 0 ? 'text-red-600' : 'text-slate-400'}>
+                        {formatCurrency(s.outstandingBalance)}
+                      </span>
+                      {(s.advanceBalance ?? 0) > 0 && (
+                        <div className="mt-0.5">
+                          <span className="inline-block text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                            Credit: {formatCurrency(s.advanceBalance!)}
+                          </span>
+                        </div>
+                      )}
                     </td>
                     <td>
                       <Badge variant={s.status === 'active' ? 'success' : 'neutral'}>
