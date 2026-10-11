@@ -27,7 +27,9 @@ import {
   Shirt,
 } from 'lucide-react'
 import { subDays } from 'date-fns'
-
+import { getSession } from '@/lib/session'
+import { getBackupStatus } from '@/services/backup.service'
+import { BackupReminderBanner } from '@/components/backup/BackupReminderBanner'
 
 export default async function DashboardPage() {
   await connectDB()
@@ -35,13 +37,17 @@ export default async function DashboardPage() {
   const thirtyDaysAgo = subDays(new Date(), 30)
   const today = new Date()
 
-  const [kpis, dailySales, topProducts, recentSalesRes, recentMovements] = await Promise.all([
+  const [session, backupStatus, kpis, dailySales, topProducts, recentSalesRes, recentMovements] = await Promise.all([
+    getSession(),
+    getBackupStatus(),
     getDashboardKPIs(),
     getDailySales(thirtyDaysAgo, today),
     getRevenueByProduct(thirtyDaysAgo, today, 5),
     getSales({ limit: 5 }),
     StockMovement.find().sort({ createdAt: -1 }).limit(5).lean(),
   ])
+
+  const isAdmin = session?.role === 'admin'
 
   return (
     <div className="space-y-6">
@@ -64,6 +70,10 @@ export default async function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* Weekly Database Backup Reminder for Admins */}
+      {isAdmin && <BackupReminderBanner status={backupStatus} />}
+
 
       {/* Row 1: Primary Financial & Inventory KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

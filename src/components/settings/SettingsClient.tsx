@@ -5,12 +5,18 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { updateSettingsAction } from '@/actions/settings.actions'
 import { Check, Settings, Save } from 'lucide-react'
+import { DatabaseBackupCard } from '@/components/backup/DatabaseBackupCard'
 
 interface SettingsClientProps {
   settings: any
+  backupStatus?: {
+    lastBackupDate: string | null
+    daysSinceLastBackup: number | null
+    isOverdue: boolean
+  }
 }
 
-export function SettingsClient({ settings }: SettingsClientProps) {
+export function SettingsClient({ settings, backupStatus }: SettingsClientProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -227,6 +233,14 @@ export function SettingsClient({ settings }: SettingsClientProps) {
           </Button>
         </div>
       </form>
+
+      {/* Database Backup & Disaster Recovery */}
+      <DatabaseBackupCard
+        lastBackupDate={backupStatus?.lastBackupDate || settings.lastBackupDate}
+        daysSinceLastBackup={backupStatus?.daysSinceLastBackup}
+        isOverdue={backupStatus?.isOverdue}
+      />
     </div>
   )
 }
+

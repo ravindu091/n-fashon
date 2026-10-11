@@ -22,6 +22,7 @@ export interface ISettings extends Document {
   contactEmail?: string
   address?: string
   minimumMarginPercent: number
+  lastBackupDate?: Date
   updatedAt: Date
 }
 
@@ -48,6 +49,7 @@ const SettingsSchema = new Schema<ISettings>(
     contactEmail:            { type: String },
     address:                 { type: String },
     minimumMarginPercent:    { type: Number, default: 0, min: 0 },
+    lastBackupDate:          { type: Date },
   },
   { timestamps: true }
 )
@@ -72,3 +74,12 @@ export async function getSettings(): Promise<ISettings> {
   cachedSettings = { doc: s, expiresAt: now + 60_000 }
   return s
 }
+
+/** Record that a manual backup was performed right now */
+export async function recordBackupTimestamp(): Promise<Date> {
+  const now = new Date()
+  await Settings.findOneAndUpdate({}, { $set: { lastBackupDate: now } }, { upsert: true, new: true })
+  clearSettingsCache()
+  return now
+}
+
