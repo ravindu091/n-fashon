@@ -1,8 +1,9 @@
-import React from 'react'
 import {
   getDashboardKPIs,
   getDailySales,
   getRevenueByProduct,
+  getTopProfitableProducts,
+  getTopProfitableVariants,
 } from '@/services/reports.service'
 import { getSales } from '@/services/sales.service'
 import { StockMovement } from '@/models/StockMovement'
@@ -10,7 +11,7 @@ import connectDB from '@/lib/mongodb'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { Badge } from '@/components/ui/Badge'
 import { SalesChart } from '@/components/charts/SalesChart'
-import { TopProductsChart } from '@/components/charts/TopProductsChart'
+import { TopItemsCard } from '@/components/dashboard/TopItemsCard'
 import { formatCurrency, formatNumber } from '@/utils/currency'
 import { formatDate } from '@/utils/date'
 import Link from 'next/link'
@@ -37,12 +38,24 @@ export default async function DashboardPage() {
   const thirtyDaysAgo = subDays(new Date(), 30)
   const today = new Date()
 
-  const [session, backupStatus, kpis, dailySales, topProducts, recentSalesRes, recentMovements] = await Promise.all([
+  const [
+    session,
+    backupStatus,
+    kpis,
+    dailySales,
+    topProducts,
+    topProfitProducts,
+    topProfitVariants,
+    recentSalesRes,
+    recentMovements,
+  ] = await Promise.all([
     getSession(),
     getBackupStatus(),
     getDashboardKPIs(),
     getDailySales(thirtyDaysAgo, today),
     getRevenueByProduct(thirtyDaysAgo, today, 5),
+    getTopProfitableProducts(thirtyDaysAgo, today, 5),
+    getTopProfitableVariants(thirtyDaysAgo, today, 5),
     getSales({ limit: 5 }),
     StockMovement.find().sort({ createdAt: -1 }).limit(5).lean(),
   ])
@@ -155,15 +168,11 @@ export default async function DashboardPage() {
           <SalesChart data={dailySales} />
         </div>
 
-        <div className="card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-sm font-bold text-[var(--foreground)]">Top Selling Garments</h2>
-              <p className="text-[11px] text-[var(--foreground-muted)]">Highest revenue products</p>
-            </div>
-          </div>
-          <TopProductsChart data={topProducts} />
-        </div>
+        <TopItemsCard
+          profitProducts={topProfitProducts}
+          profitVariants={topProfitVariants}
+          revenueProducts={topProducts}
+        />
       </div>
 
       {/* Row 4: Recent Sales & Recent Stock Movements */}

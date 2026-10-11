@@ -120,6 +120,99 @@ export async function getRevenueByProduct(dateFrom?: string | Date, dateTo?: str
   ])
 }
 
+export async function getTopProfitableProducts(dateFrom?: string | Date, dateTo?: string | Date, limit = 5) {
+  await connectDB()
+  const match: Record<string, unknown> = { status: 'confirmed' }
+  if (dateFrom || dateTo) {
+    match.saleDate = {}
+    if (dateFrom) (match.saleDate as Record<string, unknown>).$gte = new Date(dateFrom)
+    if (dateTo) (match.saleDate as Record<string, unknown>).$lte = new Date(dateTo)
+  }
+
+  return Sale.aggregate([
+    { $match: match },
+    { $unwind: '$lines' },
+    {
+      $group: {
+        _id: '$lines.productId',
+        productName: { $first: '$lines.productName' },
+        productCode: { $first: '$lines.productCode' },
+        totalQtySold: { $sum: '$lines.qty' },
+        totalRevenue: { $sum: '$lines.lineTotal' },
+        totalCOGS: { $sum: '$lines.lineCOGS' },
+      },
+    },
+    {
+      $project: {
+        productName: 1,
+        productCode: 1,
+        totalQtySold: 1,
+        totalRevenue: { $round: ['$totalRevenue', 2] },
+        totalCOGS: { $round: ['$totalCOGS', 2] },
+        grossProfit: { $round: [{ $subtract: ['$totalRevenue', '$totalCOGS'] }, 2] },
+        marginPercent: {
+          $cond: [
+            { $gt: ['$totalRevenue', 0] },
+            { $round: [{ $multiply: [{ $divide: [{ $subtract: ['$totalRevenue', '$totalCOGS'] }, '$totalRevenue'] }, 100] }, 1] },
+            0,
+          ],
+        },
+      },
+    },
+    { $sort: { grossProfit: -1 } },
+    { $limit: limit },
+  ])
+}
+
+export async function getTopProfitableVariants(dateFrom?: string | Date, dateTo?: string | Date, limit = 5) {
+  await connectDB()
+  const match: Record<string, unknown> = { status: 'confirmed' }
+  if (dateFrom || dateTo) {
+    match.saleDate = {}
+    if (dateFrom) (match.saleDate as Record<string, unknown>).$gte = new Date(dateFrom)
+    if (dateTo) (match.saleDate as Record<string, unknown>).$lte = new Date(dateTo)
+  }
+
+  return Sale.aggregate([
+    { $match: match },
+    { $unwind: '$lines' },
+    {
+      $group: {
+        _id: '$lines.variantId',
+        productName: { $first: '$lines.productName' },
+        productCode: { $first: '$lines.productCode' },
+        variantCode: { $first: '$lines.variantCode' },
+        size: { $first: '$lines.size' },
+        color: { $first: '$lines.color' },
+        totalQtySold: { $sum: '$lines.qty' },
+        totalRevenue: { $sum: '$lines.lineTotal' },
+        totalCOGS: { $sum: '$lines.lineCOGS' },
+      },
+    },
+    {
+      $project: {
+        productName: {
+          $concat: ['$productName', ' (', '$size', '/', '$color', ')'],
+        },
+        productCode: '$variantCode',
+        totalQtySold: 1,
+        totalRevenue: { $round: ['$totalRevenue', 2] },
+        totalCOGS: { $round: ['$totalCOGS', 2] },
+        grossProfit: { $round: [{ $subtract: ['$totalRevenue', '$totalCOGS'] }, 2] },
+        marginPercent: {
+          $cond: [
+            { $gt: ['$totalRevenue', 0] },
+            { $round: [{ $multiply: [{ $divide: [{ $subtract: ['$totalRevenue', '$totalCOGS'] }, '$totalRevenue'] }, 100] }, 1] },
+            0,
+          ],
+        },
+      },
+    },
+    { $sort: { grossProfit: -1 } },
+    { $limit: limit },
+  ])
+}
+
 export async function getSalesByChannel(dateFrom?: string | Date, dateTo?: string | Date) {
   await connectDB()
   const match: Record<string, unknown> = { status: 'confirmed' }

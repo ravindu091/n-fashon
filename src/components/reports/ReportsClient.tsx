@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { SalesChart } from '@/components/charts/SalesChart'
 import { TopProductsChart } from '@/components/charts/TopProductsChart'
+import { TopProfitItemsChart } from '@/components/charts/TopProfitItemsChart'
 import { formatCurrency, formatNumber, formatPercent } from '@/utils/currency'
 
 interface ReportsClientProps {
@@ -224,7 +225,32 @@ export function ReportsClient({
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="card p-5">
-              <h2 className="text-sm font-bold text-[var(--foreground)] mb-3">Top Products by Revenue</h2>
+              <div className="flex items-center justify-between mb-3 border-b border-[var(--border)] pb-2">
+                <div>
+                  <h2 className="text-sm font-bold text-[var(--foreground)]">Best Profit Items</h2>
+                  <p className="text-[11px] text-[var(--foreground-muted)]">Ranked by highest net gross profit</p>
+                </div>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Gross Profit
+                </span>
+              </div>
+              <TopProfitItemsChart
+                productsData={[...productProfits]
+                  .sort((a, b) => b.grossProfit - a.grossProfit)
+                  .slice(0, 10)}
+              />
+            </div>
+
+            <div className="card p-5">
+              <div className="flex items-center justify-between mb-3 border-b border-[var(--border)] pb-2">
+                <div>
+                  <h2 className="text-sm font-bold text-[var(--foreground)]">Top Products by Revenue</h2>
+                  <p className="text-[11px] text-[var(--foreground-muted)]">Ranked by total sales turnover</p>
+                </div>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                  Revenue
+                </span>
+              </div>
               <TopProductsChart
                 data={productProfits.map((p) => ({
                   productName: p.productName,
@@ -233,28 +259,28 @@ export function ReportsClient({
                 }))}
               />
             </div>
+          </div>
 
-            <div className="card p-5 space-y-4">
-              <h2 className="text-sm font-bold text-[var(--foreground)] border-b border-[var(--border)] pb-2">
-                Sales by Channel Performance
-              </h2>
-              <div className="space-y-3">
-                {channelBreakdown.length === 0 ? (
-                  <p className="text-xs text-[var(--foreground-muted)] py-4">No channel data available.</p>
-                ) : (
-                  channelBreakdown.map((ch) => (
-                    <div key={ch._id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-[var(--border)]">
-                      <div>
-                        <p className="text-xs font-bold text-[var(--foreground)] capitalize">{ch._id}</p>
-                        <p className="text-[10px] text-[var(--foreground-muted)]">{ch.count} order(s)</p>
-                      </div>
-                      <span className="text-sm font-bold text-[var(--foreground)]">
-                        {formatCurrency(ch.revenue)}
-                      </span>
+          <div className="card p-5 space-y-4">
+            <h2 className="text-sm font-bold text-[var(--foreground)] border-b border-[var(--border)] pb-2">
+              Sales by Channel Performance
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {channelBreakdown.length === 0 ? (
+                <p className="text-xs text-[var(--foreground-muted)] py-4 col-span-full">No channel data available.</p>
+              ) : (
+                channelBreakdown.map((ch) => (
+                  <div key={ch._id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-[var(--border)]">
+                    <div>
+                      <p className="text-xs font-bold text-[var(--foreground)] capitalize">{ch._id}</p>
+                      <p className="text-[10px] text-[var(--foreground-muted)]">{ch.count} order(s)</p>
                     </div>
-                  ))
-                )}
-              </div>
+                    <span className="text-sm font-bold text-[var(--foreground)]">
+                      {formatCurrency(ch.revenue)}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
