@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Plus, Search, Edit, Truck, Eye } from 'lucide-react'
+import { Plus, Search, Edit, Truck, Eye, Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { SupplierFormModal } from '@/components/forms/SupplierFormModal'
 import { formatCurrency } from '@/utils/currency'
 import { formatDate } from '@/utils/date'
+import { useInstantFilter } from '@/hooks/useInstantFilter'
 
 interface SupplierListClientProps {
   initialSuppliers: any[]
@@ -20,6 +21,17 @@ export function SupplierListClient({
 }: SupplierListClientProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingSupplier, setEditingSupplier] = useState<any | null>(null)
+
+  const {
+    filters,
+    isPending,
+    hasActiveFilters,
+    onSearchChange,
+    onReset,
+    onSubmit,
+  } = useInstantFilter({
+    search: currentSearch,
+  })
 
   return (
     <div className="space-y-4">
@@ -35,27 +47,47 @@ export function SupplierListClient({
         </Button>
       </div>
 
-      {/* Standardized Filter Bar */}
+      {/* Standardized Filter Bar with Instant Preview */}
       <div className="filter-bar">
-        <form method="GET" className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full">
+        <form onSubmit={onSubmit} className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full">
           <div className="relative flex-1 min-w-[220px]">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            {isPending ? (
+              <Loader2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 animate-spin pointer-events-none" />
+            ) : (
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            )}
             <input
               type="text"
               name="search"
-              defaultValue={currentSearch}
+              value={filters.search || ''}
+              onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search by supplier name, phone, or code..."
-              className="filter-input"
+              className="filter-input pr-8"
             />
+            {filters.search && (
+              <button
+                type="button"
+                onClick={() => onSearchChange('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-2">
-            <button type="submit" className="filter-btn btn-primary">
+            <button type="submit" className="filter-btn btn-primary" title="Search filter preview">
               Filter
             </button>
-            {currentSearch && (
-              <a href="/suppliers" className="filter-btn btn-outline text-slate-600 hover:text-slate-900" title="Clear search">
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={onReset}
+                className="filter-btn btn-outline text-slate-600 hover:text-slate-900"
+                title="Clear search"
+              >
                 Reset
-              </a>
+              </button>
             )}
           </div>
         </form>

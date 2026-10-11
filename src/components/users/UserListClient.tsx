@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   XCircle,
   Power,
+  X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -254,8 +255,18 @@ export function UserListClient({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by full name or email address..."
-              className="filter-input"
+              className="filter-input pr-8"
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">

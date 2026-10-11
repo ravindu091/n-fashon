@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { formatCurrency } from '@/utils/currency'
 import { formatDate } from '@/utils/date'
+import { ReturnsFilterBar } from '@/components/returns/ReturnsFilterBar'
 import connectDB from '@/lib/mongodb'
 
 
@@ -38,31 +39,8 @@ export default async function ReturnsPage({
         </Link>
       </div>
 
-      {/* Standardized Filter Bar */}
-      <div className="filter-bar">
-        <form method="GET" className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full">
-          <div className="relative flex-1 min-w-[220px]">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              name="search"
-              defaultValue={params.search}
-              placeholder="Search by return #, sale #, or customer..."
-              className="filter-input"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <button type="submit" className="filter-btn btn-primary">
-              Filter
-            </button>
-            {params.search && (
-              <a href="/returns" className="filter-btn btn-outline text-slate-600 hover:text-slate-900" title="Clear search">
-                Reset
-              </a>
-            )}
-          </div>
-        </form>
-      </div>
+      {/* Standardized Filter Bar with Instant Preview */}
+      <ReturnsFilterBar currentSearch={params.search} />
 
       {/* Returns Table */}
       <div className="card overflow-hidden">

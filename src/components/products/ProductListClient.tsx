@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Plus, Search, Filter, Shirt, Archive, Edit, Trash2, AlertCircle } from 'lucide-react'
+import { Plus, Search, Filter, Shirt, Archive, Edit, Trash2, AlertCircle, Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { ProductFormModal } from '@/components/forms/ProductFormModal'
@@ -10,6 +10,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { archiveProductAction, deleteProductAction } from '@/actions/product.actions'
 import { formatCurrency } from '@/utils/currency'
 import { formatDate } from '@/utils/date'
+import { useInstantFilter } from '@/hooks/useInstantFilter'
 
 interface ProductListClientProps {
   initialProducts: any[]
@@ -66,6 +67,25 @@ export function ProductListClient({
   }
 
 
+  const {
+    filters,
+    isPending,
+    hasActiveFilters,
+    onSearchChange,
+    onSelectChange,
+    onReset,
+    onSubmit,
+  } = useInstantFilter(
+    {
+      search: currentSearch,
+      category: currentCategory,
+      status: currentStatus,
+    },
+    {
+      defaultValues: { status: 'active' },
+    }
+  )
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -80,20 +100,40 @@ export function ProductListClient({
         </Button>
       </div>
 
-      {/* Standardized Filter / Search Bar */}
+      {/* Standardized Filter / Search Bar with Instant Preview */}
       <div className="filter-bar">
-        <form method="GET" className="flex flex-col md:flex-row md:items-center gap-2.5 w-full">
+        <form onSubmit={onSubmit} className="flex flex-col md:flex-row md:items-center gap-2.5 w-full">
           <div className="relative flex-1 min-w-[220px]">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            {isPending ? (
+              <Loader2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 animate-spin pointer-events-none" />
+            ) : (
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            )}
             <input
               type="text"
               name="search"
-              defaultValue={currentSearch}
+              value={filters.search || ''}
+              onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search by product code or name..."
-              className="filter-input"
+              className="filter-input pr-8"
             />
+            {filters.search && (
+              <button
+                type="button"
+                onClick={() => onSearchChange('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
-          <select name="category" defaultValue={currentCategory} className="filter-select w-full md:w-48">
+          <select
+            name="category"
+            value={filters.category || ''}
+            onChange={(e) => onSelectChange('category', e.target.value)}
+            className="filter-select w-full md:w-48"
+          >
             <option value="">All Categories</option>
             {categories.map((c) => (
               <option key={c} value={c}>
@@ -101,18 +141,28 @@ export function ProductListClient({
               </option>
             ))}
           </select>
-          <select name="status" defaultValue={currentStatus} className="filter-select w-full md:w-36">
+          <select
+            name="status"
+            value={filters.status || 'active'}
+            onChange={(e) => onSelectChange('status', e.target.value)}
+            className="filter-select w-full md:w-36"
+          >
             <option value="active">Active</option>
             <option value="archived">Archived</option>
           </select>
           <div className="flex items-center gap-2">
-            <button type="submit" className="filter-btn btn-primary">
+            <button type="submit" className="filter-btn btn-primary" title="Search filter preview">
               Filter
             </button>
-            {(currentSearch || currentCategory || (currentStatus && currentStatus !== 'active')) && (
-              <a href="/products" className="filter-btn btn-outline text-slate-600 hover:text-slate-900" title="Reset all filters">
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={onReset}
+                className="filter-btn btn-outline text-slate-600 hover:text-slate-900"
+                title="Reset all filters"
+              >
                 Reset
-              </a>
+              </button>
             )}
           </div>
         </form>

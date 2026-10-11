@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Plus, Search, ShoppingBag } from 'lucide-react'
+import { Plus, Search, ShoppingBag, Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { PurchaseFormModal } from '@/components/forms/PurchaseFormModal'
 import { formatCurrency } from '@/utils/currency'
 import { formatDate } from '@/utils/date'
+import { useInstantFilter } from '@/hooks/useInstantFilter'
 
 interface PurchaseListClientProps {
   initialPurchases: any[]
@@ -27,6 +28,20 @@ export function PurchaseListClient({
   currentPaymentStatus = '',
 }: PurchaseListClientProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+
+  const {
+    filters,
+    isPending,
+    hasActiveFilters,
+    onSearchChange,
+    onSelectChange,
+    onReset,
+    onSubmit,
+  } = useInstantFilter({
+    search: currentSearch,
+    status: currentStatus,
+    paymentStatus: currentPaymentStatus,
+  })
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -57,20 +72,40 @@ export function PurchaseListClient({
         </Button>
       </div>
 
-      {/* Standardized Filter Bar */}
+      {/* Standardized Filter Bar with Instant Preview */}
       <div className="filter-bar">
-        <form method="GET" className="flex flex-col lg:flex-row lg:items-center gap-2.5 w-full">
+        <form onSubmit={onSubmit} className="flex flex-col lg:flex-row lg:items-center gap-2.5 w-full">
           <div className="relative flex-1 min-w-[220px]">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            {isPending ? (
+              <Loader2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 animate-spin pointer-events-none" />
+            ) : (
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            )}
             <input
               type="text"
               name="search"
-              defaultValue={currentSearch}
+              value={filters.search || ''}
+              onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search by purchase #, supplier, or invoice..."
-              className="filter-input"
+              className="filter-input pr-8"
             />
+            {filters.search && (
+              <button
+                type="button"
+                onClick={() => onSearchChange('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
-          <select name="status" defaultValue={currentStatus} className="filter-select w-full sm:w-auto min-w-[140px]">
+          <select
+            name="status"
+            value={filters.status || ''}
+            onChange={(e) => onSelectChange('status', e.target.value)}
+            className="filter-select w-full sm:w-auto min-w-[140px]"
+          >
             <option value="">All Statuses</option>
             <option value="draft">Draft</option>
             <option value="ordered">Ordered</option>
@@ -78,7 +113,12 @@ export function PurchaseListClient({
             <option value="received">Received</option>
             <option value="cancelled">Cancelled</option>
           </select>
-          <select name="paymentStatus" defaultValue={currentPaymentStatus} className="filter-select w-full sm:w-auto min-w-[170px] font-semibold text-[var(--foreground)]">
+          <select
+            name="paymentStatus"
+            value={filters.paymentStatus || ''}
+            onChange={(e) => onSelectChange('paymentStatus', e.target.value)}
+            className="filter-select w-full sm:w-auto min-w-[170px] font-semibold text-[var(--foreground)]"
+          >
             <option value="">All Payment Statuses</option>
             <option value="outstanding">⚠️ Outstanding Balance</option>
             <option value="paid">Paid in Full</option>
@@ -86,13 +126,18 @@ export function PurchaseListClient({
             <option value="unpaid">Unpaid</option>
           </select>
           <div className="flex items-center gap-2">
-            <button type="submit" className="filter-btn btn-primary">
+            <button type="submit" className="filter-btn btn-primary" title="Search filter preview">
               Filter
             </button>
-            {(currentSearch || currentStatus || currentPaymentStatus) && (
-              <a href="/purchases" className="filter-btn btn-outline text-slate-600 hover:text-slate-900" title="Clear all filters">
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={onReset}
+                className="filter-btn btn-outline text-slate-600 hover:text-slate-900"
+                title="Reset all filters"
+              >
                 Reset
-              </a>
+              </button>
             )}
           </div>
         </form>

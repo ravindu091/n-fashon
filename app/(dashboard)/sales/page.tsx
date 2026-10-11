@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { formatCurrency } from '@/utils/currency'
 import { formatDate } from '@/utils/date'
+import { SalesFilterBar } from '@/components/sales/SalesFilterBar'
 import connectDB from '@/lib/mongodb'
 
 
@@ -40,46 +41,12 @@ export default async function SalesPage({
         </Link>
       </div>
 
-      {/* Standardized Filter Bar */}
-      <div className="filter-bar">
-        <form method="GET" className="flex flex-col lg:flex-row lg:items-center gap-2.5 w-full">
-          <div className="relative flex-1 min-w-[220px]">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              name="search"
-              defaultValue={params.search}
-              placeholder="Search by sale #, customer name, or garment..."
-              className="filter-input"
-            />
-          </div>
-          <select name="channel" defaultValue={params.channel || ''} className="filter-select w-full sm:w-auto min-w-[140px]">
-            <option value="">All Channels</option>
-            <option value="physical">Physical</option>
-            <option value="facebook">Facebook</option>
-            <option value="instagram">Instagram</option>
-            <option value="whatsapp">WhatsApp</option>
-            <option value="other">Other</option>
-          </select>
-          <select name="paymentStatus" defaultValue={params.paymentStatus || ''} className="filter-select w-full sm:w-auto min-w-[160px] font-semibold">
-            <option value="">All Payment Statuses</option>
-            <option value="outstanding">⚠️ Outstanding</option>
-            <option value="paid">Paid in Full</option>
-            <option value="partial">Partially Paid</option>
-            <option value="unpaid">Unpaid</option>
-          </select>
-          <div className="flex items-center gap-2">
-            <button type="submit" className="filter-btn btn-primary">
-              Filter
-            </button>
-            {(params.search || params.channel || params.paymentStatus) && (
-              <a href="/sales" className="filter-btn btn-outline text-slate-600 hover:text-slate-900" title="Clear all filters">
-                Reset
-              </a>
-            )}
-          </div>
-        </form>
-      </div>
+      {/* Standardized Filter Bar with Instant Preview */}
+      <SalesFilterBar
+        currentSearch={params.search}
+        currentChannel={params.channel}
+        currentPaymentStatus={params.paymentStatus}
+      />
 
       {/* Sales Table */}
       <div className="card overflow-hidden">

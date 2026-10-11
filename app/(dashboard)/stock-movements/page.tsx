@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Search, Download, History } from 'lucide-react'
 import { formatDateTime } from '@/utils/date'
+import { StockMovementFilterBar } from '@/components/inventory/StockMovementFilterBar'
 
 
 export default async function StockMovementsPage({
@@ -47,41 +48,11 @@ export default async function StockMovementsPage({
         </a>
       </div>
 
-      {/* Standardized Filter Bar */}
-      <div className="filter-bar">
-        <form method="GET" className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full">
-          <div className="relative flex-1 min-w-[220px]">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              name="search"
-              defaultValue={params.search}
-              placeholder="Search by variant code, garment name, or reference #..."
-              className="filter-input"
-            />
-          </div>
-          <select name="type" defaultValue={params.type || ''} className="filter-select w-full sm:w-60">
-            <option value="">All Movement Types</option>
-            <option value="purchase_receipt">Purchase Receipt (+)</option>
-            <option value="sale">Sale Order (-)</option>
-            <option value="customer_return">Customer Return (+)</option>
-            <option value="damaged">Damaged Stock</option>
-            <option value="missing">Missing Stock</option>
-            <option value="manual_adjustment">Manual Adjustment</option>
-            <option value="stock_correction">Stock Correction</option>
-          </select>
-          <div className="flex items-center gap-2">
-            <button type="submit" className="filter-btn btn-primary">
-              Filter
-            </button>
-            {(params.search || params.type) && (
-              <a href="/stock-movements" className="filter-btn btn-outline text-slate-600 hover:text-slate-900" title="Clear all filters">
-                Reset
-              </a>
-            )}
-          </div>
-        </form>
-      </div>
+      {/* Standardized Filter Bar with Instant Preview */}
+      <StockMovementFilterBar
+        currentSearch={params.search}
+        currentType={params.type}
+      />
 
       {/* Movement Ledger Table */}
       <div className="card overflow-hidden">

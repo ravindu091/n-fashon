@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Trash2, ShoppingCart, AlertTriangle, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import { confirmSaleAction } from '@/actions/sale.actions'
 import { formatCurrency } from '@/utils/currency'
 import type { SaleChannel } from '@/types'
@@ -54,6 +55,25 @@ export function NewSaleClient({ customers, variants, channels }: NewSaleClientPr
   const [error, setError] = useState<string | null>(null)
 
   const activeVariant = variants.find((v) => v._id === selectedVariantId)
+
+  const variantOptions = useMemo(() => {
+    return variants.map((v) => {
+      const isOutOfStock = v.currentStock === 0
+      return {
+        value: v._id,
+        label: `${v.productName} (${v.size} / ${v.color})`,
+        sublabel: `Code: ${v.code} | LKR ${(v.promoPrice || v.defaultSellingPrice).toLocaleString()}`,
+        badge: isOutOfStock ? '0 pcs' : `${v.currentStock} in stock`,
+        badgeVariant: isOutOfStock
+          ? ('danger' as const)
+          : v.currentStock <= 3
+          ? ('warning' as const)
+          : ('success' as const),
+        disabled: isOutOfStock,
+        searchTerms: `${v.productName} ${v.code} ${v.size} ${v.color}`,
+      }
+    })
+  }, [variants])
 
   const handleAddToCart = () => {
     if (!activeVariant) return
@@ -181,17 +201,13 @@ export function NewSaleClient({ customers, variants, channels }: NewSaleClientPr
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="sm:col-span-2">
                 <label className="label text-[11px]">Choose Available Variant</label>
-                <select
+                <SearchableSelect
+                  options={variantOptions}
                   value={selectedVariantId}
-                  onChange={(e) => setSelectedVariantId(e.target.value)}
-                  className="input text-xs"
-                >
-                  {variants.map((v) => (
-                    <option key={v._id} value={v._id} disabled={v.currentStock === 0}>
-                      {v.productName} ({v.code} - {v.size} / {v.color}) — {v.currentStock} in stock — LKR {v.defaultSellingPrice}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setSelectedVariantId(val)}
+                  placeholder="Search garment name, SKU, size, or color..."
+                  searchPlaceholder="Type garment name, code, size, color..."
+                />
               </div>
 
               <div>

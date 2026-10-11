@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Search, SlidersHorizontal, Layers, Package } from 'lucide-react'
+import { Search, SlidersHorizontal, Layers, Package, Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { AdjustStockModal } from '@/components/forms/AdjustStockModal'
 import { formatCurrency } from '@/utils/currency'
 import { formatDate } from '@/utils/date'
+import { useInstantFilter } from '@/hooks/useInstantFilter'
 
 interface BatchListClientProps {
   initialBatches: any[]
@@ -22,6 +23,24 @@ export function BatchListClient({
 }: BatchListClientProps) {
   const [adjustingBatch, setAdjustingBatch] = useState<any | null>(null)
 
+  const {
+    filters,
+    isPending,
+    hasActiveFilters,
+    onSearchChange,
+    onSelectChange,
+    onReset,
+    onSubmit,
+  } = useInstantFilter(
+    {
+      search: currentSearch,
+      status: currentStatus,
+    },
+    {
+      defaultValues: { status: 'active' },
+    }
+  )
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -33,32 +52,57 @@ export function BatchListClient({
         </div>
       </div>
 
-      {/* Standardized Filter Bar */}
+      {/* Standardized Filter Bar with Instant Preview */}
       <div className="filter-bar">
-        <form method="GET" className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full">
+        <form onSubmit={onSubmit} className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full">
           <div className="relative flex-1 min-w-[220px]">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            {isPending ? (
+              <Loader2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 animate-spin pointer-events-none" />
+            ) : (
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            )}
             <input
               type="text"
               name="search"
-              defaultValue={currentSearch}
+              value={filters.search || ''}
+              onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search by batch code, garment name, variant, or supplier..."
-              className="filter-input"
+              className="filter-input pr-8"
             />
+            {filters.search && (
+              <button
+                type="button"
+                onClick={() => onSearchChange('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
-          <select name="status" defaultValue={currentStatus} className="filter-select w-full sm:w-56">
+          <select
+            name="status"
+            value={filters.status || 'active'}
+            onChange={(e) => onSelectChange('status', e.target.value)}
+            className="filter-select w-full sm:w-56"
+          >
             <option value="">All Statuses</option>
             <option value="active">Active (Available)</option>
             <option value="depleted">Depleted (Zero Remaining)</option>
           </select>
           <div className="flex items-center gap-2">
-            <button type="submit" className="filter-btn btn-primary">
+            <button type="submit" className="filter-btn btn-primary" title="Search filter preview">
               Filter
             </button>
-            {(currentSearch || currentStatus) && (
-              <a href="/batches" className="filter-btn btn-outline text-slate-600 hover:text-slate-900" title="Clear all filters">
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={onReset}
+                className="filter-btn btn-outline text-slate-600 hover:text-slate-900"
+                title="Reset all filters"
+              >
                 Reset
-              </a>
+              </button>
             )}
           </div>
         </form>

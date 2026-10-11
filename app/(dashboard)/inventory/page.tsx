@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge'
 import { formatCurrency, formatNumber } from '@/utils/currency'
 import Link from 'next/link'
 import { Boxes, DollarSign, AlertTriangle, Layers, Shirt, ArrowRight } from 'lucide-react'
+import { InventoryTableClient } from '@/components/inventory/InventoryTableClient'
 
 
 export default async function InventoryPage() {
@@ -114,59 +115,8 @@ export default async function InventoryPage() {
         </div>
       )}
 
-      {/* Variant Inventory Table */}
-      <div className="card overflow-hidden">
-        <div className="p-4 border-b border-[var(--border)]">
-          <h2 className="text-sm font-bold text-[var(--foreground)]">Variant Stock & Valuation Ledger</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Garment Name</th>
-                <th>Variant Code</th>
-                <th>Category</th>
-                <th>Size / Color</th>
-                <th>Selling Price</th>
-                <th>Available Pieces</th>
-                <th>Stock Valuation</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {variantList.map((v) => {
-                const isOutOfStock = v.currentStock === 0
-                const isLowStock = v.currentStock <= v.reorderLevel && !isOutOfStock
-
-                return (
-                  <tr key={v._id}>
-                    <td className="text-xs font-semibold text-[var(--foreground)]">{v.productName}</td>
-                    <td className="font-mono text-xs font-bold">{v.code}</td>
-                    <td className="text-xs">{v.category}</td>
-                    <td className="text-xs">{v.size} / {v.color}</td>
-                    <td className="text-xs font-semibold">{formatCurrency(v.defaultSellingPrice)}</td>
-                    <td className="text-xs font-bold">
-                      <span className={isOutOfStock ? 'text-red-600' : isLowStock ? 'text-amber-600' : 'text-emerald-600'}>
-                        {v.currentStock} pcs
-                      </span>
-                    </td>
-                    <td className="text-xs font-semibold">{formatCurrency(v.inventoryValuation)}</td>
-                    <td>
-                      {isOutOfStock ? (
-                        <Badge variant="danger">Out of Stock</Badge>
-                      ) : isLowStock ? (
-                        <Badge variant="warning">Low Stock</Badge>
-                      ) : (
-                        <Badge variant="success">In Stock</Badge>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Variant Inventory Table with Instant Search & Filtering */}
+      <InventoryTableClient variantList={variantList} />
     </div>
   )
 }
