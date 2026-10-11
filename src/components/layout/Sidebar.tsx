@@ -71,11 +71,11 @@ export function Sidebar({
       )}
 
       <aside
-        className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'open' : ''} z-50 flex flex-col justify-between`}
+        className={`sidebar sticky top-0 self-start h-screen ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'open' : ''} z-50 flex flex-col justify-between`}
       >
-        <div>
+        <div className="flex-1 flex flex-col min-h-0">
           {/* Logo & brand header */}
-          <div className="h-[60px] border-b border-slate-700/60 flex items-center justify-between px-4">
+          <div className="h-[60px] border-b border-slate-700/60 flex items-center justify-between px-4 flex-shrink-0">
             {!collapsed ? (
               <div className="flex items-center gap-2.5 overflow-hidden">
                 <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center font-bold text-white text-sm shadow-sm flex-shrink-0">
@@ -102,7 +102,7 @@ export function Sidebar({
           </div>
 
           {/* Navigation link list */}
-          <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100dvh-130px)]">
+          <nav className="p-3 space-y-1 overflow-y-auto flex-1 min-h-0">
             {visibleNavItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
@@ -123,7 +123,7 @@ export function Sidebar({
         </div>
 
         {/* Footer / logout */}
-        <div className="p-3 border-t border-slate-700/60">
+        <div className="p-3 border-t border-slate-700/60 flex-shrink-0">
           <form action="/api/auth/logout" method="POST">
             <button
               type="submit"

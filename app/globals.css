@@ -103,12 +103,20 @@ body {
 .sidebar {
   background:  var(--sidebar-bg);
   color:       var(--sidebar-text);
-  min-height:  100dvh;
+  height:      100dvh;
+  position:    sticky;
+  top:         0;
+  left:        0;
+  align-self:  flex-start;
   width:       260px;
   transition:  width 0.2s ease;
   flex-shrink: 0;
+  z-index:     45;
+  display:     flex;
+  flex-direction: column;
 }
 .sidebar.collapsed { width: 64px; }
+
 
 .sidebar-link {
   display:       flex;
@@ -379,9 +387,22 @@ body {
 
 /* ── Responsive layout ── */
 @media (max-width: 768px) {
-  .sidebar { display: none; }
-  .sidebar.open { display: flex; flex-direction: column; position: fixed; z-index: 50; height: 100dvh; }
+  .sidebar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 260px;
+    height: 100dvh;
+    z-index: 50;
+  }
+  .sidebar.open {
+    display: flex;
+    flex-direction: column;
+  }
 }
+
 
 /* ── Utility ── */
 .text-primary  { color: var(--primary); }
